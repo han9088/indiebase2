@@ -1,0 +1,27 @@
+---
+description: Elegant structure — constants, modules, and file boundaries
+alwaysApply: true
+---
+
+# Code organization
+
+## Constants and literals
+
+- **Split by domain**, not one catch-all file: e.g. `constants/http.ts`, `constants/auth.ts`, `constants/limits.ts` instead of growing a single `constants.ts` with unrelated values.
+- **One concern per file**: HTTP status names, header names, timeouts, and business enums live in the file that matches their domain; import where needed.
+- Prefer **`as const` objects** or small enums for grouped literals; export **named** symbols; avoid anonymous magic numbers/strings in logic when a name adds clarity.
+
+## Modules and growth
+
+- When a file **mixes** unrelated layers (many constants + DB + HTTP + types), **split** along seams: `*.types.ts`, `*.constants.ts`, or a `constants/` folder next to the feature.
+- **Barrel files** (`index.ts`): use to re-export a **small** public surface; do not turn barrels into junk drawers that hide deep import cycles.
+
+## Types and logic
+
+- **Colocate** types with the feature until the file is hard to scan; then extract `types.ts` / `schema.ts` next to the feature (as in `community/src/migrations/`).
+- Prefer **pure functions** in dedicated helpers; keep orchestration (I/O, framework glue) thin and readable.
+
+## Naming and readability
+
+- File and export names should **read as intent** (`buildSessionCookie` not `doStuff`).
+- Prefer **early returns** and shallow nesting over deep `if/else` ladders when behavior stays equivalent.

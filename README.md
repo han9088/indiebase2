@@ -62,7 +62,6 @@ Email: [indiebase@deskbtm.com](mailto://indiebase@deskbtm.com)
 
 - [Nestjs](https://github.com/nestjs/nest) Nest is a framework for building efficient, scalable Node.js server-side applications.
 - [Ceph](https://ceph.io/) Ceph is an open-source, distributed storage system.
-- [Traefik](https://github.com/traefik/traefik/) Traefik is an open-source Edge Router that makes publishing your services a fun and easy experience.
 
 ## Discussion Etiquette
 

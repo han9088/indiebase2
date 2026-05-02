@@ -1,0 +1,11 @@
+---
+description: TypeScript style for this monorepo
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+- Prefer `const`; use `async`/`await` over raw promise chains. Split constants and large types into focused files (see **code-organization** rule).
+- Avoid `any`; narrow types at boundaries.
+- Respect workspace boundaries: `packages/`, `first_party/`, `community/` — import published paths or workspace deps as the package defines.

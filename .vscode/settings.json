@@ -1,6 +1,11 @@
 {
+  "oxc.fmt.configPath": ".oxfmtrc.json",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
+    "source.fixAll.oxc": "always"
+  },
+  "[dockercompose]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }
