@@ -1,0 +1,24 @@
+schema: spec-driven
+
+context: |
+  Project: Indiebase Community — self-hosted BaaS + financial services for indie developers.
+  Stack: Rust (Cargo workspace), Postgres 17, Redis, PostgREST, SeaweedFS S3.
+  Local infra: `docker compose up -d` at repo root; env in `.env`.
+  Lint/format: `cargo fmt`, `cargo clippy`; tests via `cargo test`.
+  Docs language: reply to users in Simplified Chinese; source code, comments, and commit messages in English.
+  Workflow: OpenSpec OPSX (core profile) — explore → propose → apply → sync → archive.
+  Brownfield: delta specs only; do not back-fill specs for untouched code.
+
+rules:
+  proposal:
+    - Keep proposals under 800 words; include Non-goals
+    - One logical change per proposal; split large scope into follow-up changes
+  design:
+    - Match existing Rust module boundaries and Docker layout
+    - Call out Postgres schema / PostgREST / RLS impacts when touching data
+  tasks:
+    - Break into chunks that can be verified independently
+    - Include `cargo test` / `cargo clippy` verification steps where relevant
+  specs:
+    - Use Given/When/Then scenarios
+    - Reference existing patterns in repo before inventing new abstractions
