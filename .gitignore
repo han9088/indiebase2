@@ -1,19 +1,14 @@
-# dependencies (bun install)
-node_modules
+# Rust
+/target/
+**/*.rs.bk
 
 # output
 out
 dist
-*.tgz
-
-# code coverage
-coverage
-*.lcov
 
 # logs
 logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+*.log
 
 # dotenv environment variable files
 .env
@@ -21,11 +16,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .env.test.local
 .env.production.local
 .env.local
-
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
 
 # IntelliJ based IDEs
 .idea

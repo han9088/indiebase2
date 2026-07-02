@@ -1,12 +1,12 @@
 ---
-description: Monorepo layout, Bun, tooling, and assistant behavior for Indiebase
+description: Monorepo layout, Rust tooling, and assistant behavior for Indiebase
 alwaysApply: true
 ---
 
 # Indiebase — core context
 
-- **Runtime / PM**: Bun workspaces (`packages/**/*`, `first_party/**/*`, `community/**/*`). Prefer Bun APIs where appropriate (`Bun.file`, `Bun.write`, `bun:test`).
-- **Lint / format**: Oxlint (`.oxlintrc.json`) + Oxfmt (`.oxfmtrc.json`). Tabs + single quotes; match existing import style.
+- **Language / runtime**: Rust (Cargo workspace). Prefer idiomatic Rust; use `cargo` for build, test, and lint.
+- **Lint / format**: `cargo fmt` + `cargo clippy`. Match existing module and import style in the crate.
 - **Docker**: Local stack via `docker compose` at repo root; env in `.env` (see `docker-compose.yaml`).
-- **Edits**: Change only what the task requires; do not remove `console` calls unless the user asks.
+- **Edits**: Change only what the task requires.
 - **Language**: Reply to the user in **Simplified Chinese**. **Source code, comments, and commit messages in English.**
