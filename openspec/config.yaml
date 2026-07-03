@@ -2,7 +2,14 @@ schema: spec-driven
 
 context: |
   Project: Indiebase Community — self-hosted BaaS + financial services for indie developers.
-  Stack: Rust (Cargo workspace), Postgres 17, Redis, PostgREST, SeaweedFS S3.
+  Stack: Rust (Cargo workspace) — Axum, sqlx, SeaQuery, OpenDAL, ulid; Postgres 17, Redis, PostgREST.
+  Manager API: Dashboard platform/admin routes (/api/projects, /api/tables, /api/auth/*, …); NOT /api/data/*.
+  Data API: CRUD gateway (/api/data/*), PostgREST proxy, separate from Manager API; Dashboard Session or SDK API Key.
+  MVP TS SDK: see docs/prd/mvp-sdk.md — @supabase/postgrest-js thin wrapper; /api/data/{projectId} + API Key.
+  Project API Key: SDK authentication/authorization only — does NOT resolve project context.
+  Isolation: schema-per-project as proj_{ulid}; platform tables in public schema.
+  Auth: no JWT. Dashboard + Project login: Opaque Token + Redis.
+  Optional object storage: SeaweedFS S3 under docker/seaweedfs/ (separate compose, not in root stack).
   Local infra: `docker compose up -d` at repo root; env in `.env`.
   Lint/format: `cargo fmt`, `cargo clippy`; tests via `cargo test`.
   Docs language: reply to users in Simplified Chinese; source code, comments, and commit messages in English.

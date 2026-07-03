@@ -6,7 +6,7 @@
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/deskbtm?style=social)](https://twitter.com/intent/follow?screen_name=deskbtm)
 
 > [!TIP]
-> 🚧🚧🚧 At the beginning of the project, there is currently no version control in place.
+> Early-stage rewrite: Indiebase Community is being rebuilt on Rust. Application crates are not yet in this repo.
 
 Indiebase is a self-hosted platform explicitly designed for indie developers or teams. Providing BaaS and financial services.
 
@@ -31,49 +31,23 @@ Indiebase is a self-hosted platform explicitly designed for indie developers or 
 >
 > - Indiebase highly depends on Github and considers it as the default code management.
 > - `Indiebase Pro` is not free. To use it, you need to purchase a commercial license.
-> - `Indiebase Community` is available under the [AGPL-3.0](https://github.com/indiebase/indiebase/blob/main/LICENSE) license.
+> - `Indiebase Community` is available under the [AGPL-3.0](./LICENSE) license.
+
 
 ## Join Indiebase
 
 `Indiebase Community` is PR welcome.
 If you are interested in the development of `Indiebase Pro`, please read the [Indiebase disclosure agreement](https://github.com/indiebase/indiebase/blob/main/docs/zh-CN/non-disclosure-agreement-zh_cn.md) carefully. Of course, the obtained profits will be distributed among all project participants according to a specified algorithm.  
 <br />
-Email: [indiebase@deskbtm.com](mailto://indiebase@deskbtm.com)
+Email: [indiebase@deskbtm.com](mailto:indiebase@deskbtm.com)
 
-## First Party
+## Sub-Projects
 
-#### FOSS libraries.
-
-- [passport-paesto](https://github.com/nawbc/passport-paseto)
-- [nestjs-paesto](https://github.com/indiebase/indiebase)
-- [winston-openobserve](https://github.com/indiebase/indiebase)
-- [@indiebase/nest-s3](https://github.com/indiebase/indiebase)
-- [@indiebase/nest-stoplight-elements](https://github.com/indiebase/indiebase)
-- [@indiebase/nest-knex](https://github.com/indiebase/indiebase)
-- [@indiebase/nest-octokit](https://github.com/indiebase/indiebase)
-- [@indiebase/nest-nacos](https://github.com/indiebase/nest-nacos) deprecated
-- [@indiebase/nest-casbin](https://github.com/indiebase/nest-casbin) deprecated
-
-#### Sub-Projects
-
-- [PITM](https://github.com/indiebase/PTIM) It's a watcher client which means you don't need to register a company to access payments. Support WeChat Pay, Alipay, and PayPal. Serving for indiebase pro.
-
-## Architecture
-
-- [Nestjs](https://github.com/nestjs/nest) Nest is a framework for building efficient, scalable Node.js server-side applications.
-- [Ceph](https://ceph.io/) Ceph is an open-source, distributed storage system.
+- [PITM](https://github.com/indiebase/PTIM) — payment watcher client (WeChat Pay, Alipay, PayPal). Serves Indiebase Pro.
 
 ## Discussion Etiquette
 
 In order to keep the conversation clear and transparent, please limit the discussion to English and keep things on topic with the issue. Non-compliant issues may be closed directly. Be considerate to others and try to be courteous and professional at all times.
-
-## Credits
-
-See [Credits.md](https://github.com/indiebase/indiebase/blob/main/docs/CREDITS.md)
-
-## Contribution
-
-[CODE_OF_CONDUCT](./docs/CODE_OF_CONDUCT.md)
 
 ## License
 
