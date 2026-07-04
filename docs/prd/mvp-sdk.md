@@ -5,7 +5,7 @@
 | Status | Draft |
 | Product | Indiebase — BaaS |
 | Last updated | 2026-07-04 |
-| Parent | [baas-platform-architecture.md](./baas-platform-architecture.md) |
+| Parent | [baas-platform-architecture.md](./baas-platform-architecture.md) · [mvp-phases.md](./mvp-phases.md) |
 
 ## 1. Scope
 

@@ -1011,11 +1011,15 @@ Dashboard、Project、App User 登录 **统一** Opaque Token + Redis；**不使
 
 **与 Supabase 对齐点：** Publishable ≈ anon key；Secret ≈ service_role key；RLS + role 切换决定数据访问。**差异：** 终端用户身份用 **Opaque Token + Redis**；PostgREST **不对公网**；role 切换经 **网关 Internal-Context + db-pre-request**，非客户端 JWT claim。
 
-## 12. MVP Client SDK
+## 12. MVP 切分
+
+Phase 0–5 里程碑、验收标准与 OpenSpec change 建议见 **[mvp-phases.md](./mvp-phases.md)**。
+
+## 13. MVP Client SDK
 
 TypeScript Data API SDK（`@supabase/postgrest-js` 薄封装）详见 **[mvp-sdk.md](./mvp-sdk.md)**。
 
-## 13. Open Questions
+## 14. Open Questions
 
 - Data API 首版代理范围：MVP 对齐 [mvp-sdk.md](./mvp-sdk.md)（table CRUD）；RPC / 视图 / OpenAPI 二期
 - PostgREST 新 schema 注册与 reload 机制（NOTIFY / SIGHUP / sidecar）
@@ -1028,9 +1032,10 @@ TypeScript Data API SDK（`@supabase/postgrest-js` 薄封装）详见 **[mvp-sdk
 - SDK Storage（客户端）— 见 [todo.md §6](./todo.md#6-客户端-storage)
 - ABAC / Policy DSL / Compiler — 见 [todo.md §1–§2](./todo.md#1-per-project-abac)
 
-## 14. References
+## 15. References
 
 - Local stack: [docker-compose.yaml](../../docker-compose.yaml) — Postgres, Redis, PostgREST
+- MVP phases: [mvp-phases.md](./mvp-phases.md)
 - MVP TS SDK: [mvp-sdk.md](./mvp-sdk.md)
 - 后续实现 Todo: [todo.md](./todo.md)
 - OpenSpec config: [openspec/config.yaml](../../openspec/config.yaml)

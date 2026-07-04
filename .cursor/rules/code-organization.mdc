@@ -18,7 +18,7 @@ alwaysApply: true
 
 ## Types and logic
 
-- **Colocate** types with the feature until the file is hard to scan; then extract `types.ts` / `schema.ts` next to the feature (as in `community/src/migrations/`).
+- **Colocate** types with the feature until the file is hard to scan; then extract `types.ts` / `schema.ts` next to the feature (e.g. `crates/api/src/migrations/`).
 - Prefer **pure functions** in dedicated helpers; keep orchestration (I/O, framework glue) thin and readable.
 
 ## Naming and readability

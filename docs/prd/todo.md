@@ -6,7 +6,7 @@
 | Product | Indiebase — BaaS |
 | Last updated | 2026-07-04 |
 | Parent | [baas-platform-architecture.md](./baas-platform-architecture.md) |
-| MVP scope | [mvp-sdk.md](./mvp-sdk.md) |
+| MVP scope | [mvp-sdk.md](./mvp-sdk.md) · 阶段划分 [mvp-phases.md](./mvp-phases.md) |
 
 [MVP 架构](./baas-platform-architecture.md) 交付 bootstrap RLS + `SET ROLE`（§11.3、§11.11）。**本文件**记录 MVP 之后按依赖顺序推进的能力；实现状态在此维护。
 
