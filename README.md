@@ -6,18 +6,14 @@
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/deskbtm?style=social)](https://twitter.com/intent/follow?screen_name=deskbtm)
 
 > [!TIP]
-> Early-stage rewrite: Indiebase Community is being rebuilt on Rust. Application crates are not yet in this repo.
+> Early-stage rewrite: Indiebase is being rebuilt on Rust. Application crates are not yet in this repo.
 
-Indiebase is a self-hosted platform explicitly designed for indie developers or teams. Providing BaaS and financial services.
+Indiebase is a self-hosted BaaS platform for indie developers and small teams.
 
 ## FAQ
 
 - What's Indiebase?  
-  Indiebase is a self-hosted platform explicitly designed for indie hackers or teams. Providing financial services and BaaS. It is similar to a private OpenCollective + Firebase. The initial purpose of Indiebase was to serve [deskbtm](https://deskbtm.com), used for managing [Nawb](https://nawb.deskbtm.com/), [PlugKit](https://github.com/deskbtm-plugkit/plugkit), etc.
-- What's Indiebase Community?  
-  Indiebase Community is the FOSS edition of Indiebase. It provides basic functions like financial services and basic BaaS.
-- What's Indiebase Pro?  
-  Indiebase Pro is the paid version of Indiebase. It provides more functions.
+  Indiebase is a self-hosted BaaS for indie hackers and small teams — similar to a private Firebase. This repository is the FOSS edition, available under [AGPL-3.0](./LICENSE). The initial purpose of Indiebase was to serve [deskbtm](https://deskbtm.com), used for managing [Nawb](https://nawb.deskbtm.com/), [PlugKit](https://github.com/deskbtm-plugkit/plugkit), etc.
 - Does Indiebase provide an online service?  
   Nope, Indiebase only provides the self-hosted service. Ensure the functionality while making it capable of running on low-configured server environments as much as possible.
 
@@ -30,20 +26,14 @@ Indiebase is a self-hosted platform explicitly designed for indie developers or 
 > [!IMPORTANT]
 >
 > - Indiebase highly depends on Github and considers it as the default code management.
-> - `Indiebase Pro` is not free. To use it, you need to purchase a commercial license.
-> - `Indiebase Community` is available under the [AGPL-3.0](./LICENSE) license.
+> - `Indiebase` (this repo) is available under the [AGPL-3.0](./LICENSE) license.
 
 
 ## Join Indiebase
 
-`Indiebase Community` is PR welcome.
-If you are interested in the development of `Indiebase Pro`, please read the [Indiebase disclosure agreement](https://github.com/indiebase/indiebase/blob/main/docs/zh-CN/non-disclosure-agreement-zh_cn.md) carefully. Of course, the obtained profits will be distributed among all project participants according to a specified algorithm.  
+`Indiebase` is PR welcome.  
 <br />
 Email: [indiebase@deskbtm.com](mailto:indiebase@deskbtm.com)
-
-## Sub-Projects
-
-- [PITM](https://github.com/indiebase/PTIM) — payment watcher client (WeChat Pay, Alipay, PayPal). Serves Indiebase Pro.
 
 ## Discussion Etiquette
 

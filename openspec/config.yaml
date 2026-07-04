@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  Project: Indiebase Community — self-hosted BaaS + financial services for indie developers.
+  Project: Indiebase — self-hosted BaaS for indie developers and small teams.
   Stack: Rust (Cargo workspace) — Axum, sqlx, SeaQuery, OpenDAL, ulid; Postgres 17, Redis, PostgREST.
   Manager API: Dashboard platform/admin routes (/api/projects, /api/tables, /api/auth/*, …); NOT /api/data/*.
   Data API: CRUD gateway (/api/data/*), PostgREST proxy, separate from Manager API; Dashboard Session or SDK API Key.
