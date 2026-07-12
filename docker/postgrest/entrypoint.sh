@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Build PGRST_DB_URI from Docker secret; percent-encode password for URI safety.
+# Build PGRST_DB_URI from Docker secret + env (no hardcoded user/db/host/port).
 pass_raw=$(tr -d '\n\r' < /run/secrets/pg_password)
 
 urlencode() {
@@ -22,7 +22,12 @@ urlencode() {
 	printf '%s' "$_s"
 }
 
+: "${POSTGRES_USER:?POSTGRES_USER is required}"
+: "${POSTGRES_DB:?POSTGRES_DB is required}"
+: "${PGRST_DB_HOST:?PGRST_DB_HOST is required}"
+: "${PGRST_DB_PORT:?PGRST_DB_PORT is required}"
+
 pass_enc=$(urlencode "$pass_raw")
-export PGRST_DB_URI="postgres://postgres:${pass_enc}@postgres:5432/indiebase-dev?sslmode=disable"
+export PGRST_DB_URI="postgres://${POSTGRES_USER}:${pass_enc}@${PGRST_DB_HOST}:${PGRST_DB_PORT}/${POSTGRES_DB}?sslmode=disable"
 
 exec postgrest "$@"

@@ -21,7 +21,7 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 | Phase | 名称 | 交付物（摘要） | 验收一句话 |
 |-------|------|----------------|------------|
-| **0** | 工程壳 + 本地栈 | Cargo workspace、Axum `/health`、compose 联调 | `cargo test` + `curl /health` + compose up |
+| **0** | 工程壳 + 本地栈 | Cargo workspace、Axum `/health`、OpenAPI + Scalar 文档、compose 联调 | `cargo test` + `curl /health` + `/docs` + compose up |
 | **1** | Platform + 登录 + Project | 平台表、Dashboard/Project Session、创建 `proj_{ulid}` | 登录 → 建 Project → schema + Key 对已生成 |
 | **2** | Data API 网关 | PostgREST 代理、`SET ROLE`、双路径 §6.2.3、Key 校验 | SDK URL CRUD 通；非法凭证组合 403 |
 | **3** | Metadata / 表设计器 | 建表 API、bootstrap RLS、`allow_anon_read` | Manager 建表 → Data API 可 CRUD |
@@ -38,9 +38,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 | 任务 | 说明 |
 |------|------|
-| Cargo workspace | 根 `Cargo.toml`；crate `api`（或 `indiebase-server`） |
+| Cargo workspace | 根 `Cargo.toml`；crate `crates/api` |
 | Axum 壳 | `GET /health` → 200 |
-| 配置 | 读 `.env`（Postgres、Redis、PostgREST URL） |
+| API 文档 | `utoipa` 生成 OpenAPI；`GET /openapi.json`；Scalar UI `GET /docs` |
+| 开发方式 | **TDD**：先写集成测试再实现（见 `.cursor/rules/backend-tdd-prd.mdc`） |
+| 配置 | `INDIEBASE_ENV`（默认 `dev`）；只读 `.env.{env}`（如 `.env.dev`）；Postgres / Redis 离散字段 |
 | 本地栈 | 已有 `docker compose`：Postgres 17、Redis 6、PostgREST |
 
 **验收：**
@@ -48,6 +50,8 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 - [ ] `cargo fmt`、`cargo clippy`、`cargo test` 通过
 - [ ] `docker compose up -d` 后 Axum 能连 Postgres / Redis
 - [ ] `curl localhost:{port}/health` 返回 OK
+- [ ] `curl localhost:{port}/openapi.json` 返回含 `/health` 的 OpenAPI JSON
+- [ ] 浏览器打开 `localhost:{port}/docs` 可见 Scalar API 文档
 
 **依赖：** 无。
 
@@ -188,7 +192,7 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 | Phase | 建议 change 名（示例） |
 |-------|------------------------|
-| 0 | `bootstrap-axum-workspace` |
+| 0 | `bootstrap-api` |
 | 1 | `platform-auth-project-lifecycle` |
 | 2 | `data-api-gateway` |
 | 3 | `metadata-table-designer` |

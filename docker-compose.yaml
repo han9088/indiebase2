@@ -1,12 +1,11 @@
-# Local development: `docker compose up -d` (loads `.env` automatically).
-# Secrets: POSTGRES_PASSWORD / REDIS_PASSWORD from `.env` → Compose v2.23+ secret provider.
+# Local development: `docker compose --env-file .env.dev up -d`
 
 x-logging: &x-logging
   logging:
-    driver: 'json-file'
+    driver: "json-file"
     options:
-      max-file: '5'
-      max-size: '10m'
+      max-file: "5"
+      max-size: "10m"
 
 services:
   postgres:
@@ -22,7 +21,7 @@ services:
       - pg_data:/var/lib/postgresql/data/pgdata
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - 5432:5432
+      - "${POSTGRES_PORT}:5432"
     secrets:
       - pg_password
 
@@ -31,13 +30,13 @@ services:
     <<: *x-logging
     restart: unless-stopped
     ports:
-      - 6379:6379
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data:rw
       - ${CONFIG_DIR}/redis:/usr/local/etc/redis:ro
     secrets:
       - redis_password
-    entrypoint: ['/bin/sh', '-c']
+    entrypoint: ["/bin/sh", "-c"]
     command:
       - 'exec redis-server /usr/local/etc/redis/redis.conf --requirepass "$$(cat /run/secrets/redis_password | tr -d "\n\r")"'
 
@@ -46,13 +45,17 @@ services:
     <<: *x-logging
     restart: unless-stopped
     ports:
-      - 13000:3000
+      - "${POSTGREST_PORT}:3000"
     volumes:
       - ./docker/postgrest/entrypoint.sh:/entrypoint.sh:ro
     secrets:
       - pg_password
-    entrypoint: ['/bin/sh', '/entrypoint.sh']
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGRST_DB_HOST: ${PGRST_DB_HOST}
+      PGRST_DB_PORT: "5432"
       PGRST_OPENAPI_SERVER_PROXY_URI: ${PGRST_OPENAPI_SERVER_PROXY_URI}
       PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
       PGRST_DB_ANON_ROLE: ${PGRST_DB_ANON_ROLE}

@@ -6,9 +6,49 @@
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/deskbtm?style=social)](https://twitter.com/intent/follow?screen_name=deskbtm)
 
 > [!TIP]
-> Early-stage rewrite: Indiebase is being rebuilt on Rust. Application crates are not yet in this repo.
+> Early-stage rewrite: Indiebase is being rebuilt on Rust. Phase 0 (`crates/api`) provides an Axum server with `GET /health`, OpenAPI at `/openapi.json`, and Scalar docs at `/docs`.
 
 Indiebase is a self-hosted BaaS platform for indie developers and small teams.
+
+## Local development (API)
+
+1. Start infrastructure:
+
+   ```bash
+   docker compose --env-file .env.dev up -d
+   ```
+
+2. Configure environment:
+
+   ```bash
+   cp .env.example .env.dev
+   ```
+
+   The API reads `INDIEBASE_ENV` (default `dev`) and loads only `.env.{env}` (e.g. `.env.dev`). No shared `.env`.
+
+3. Run the API server:
+
+   ```bash
+   cargo run -p api
+   # or: INDIEBASE_ENV=dev cargo run -p api
+   ```
+
+4. Health check:
+
+   ```bash
+   curl -s http://localhost:8080/health
+   ```
+
+5. API docs:
+
+   ```bash
+   curl -s http://localhost:8080/openapi.json | head
+   open http://localhost:8080/docs   # Scalar UI
+   ```
+
+MVP phase breakdown: [docs/prd/mvp-phases.md](./docs/prd/mvp-phases.md) (Phase 0: workspace + health + OpenAPI/Scalar).
+
+Agent / AI workflow: [AGENTS.md](./AGENTS.md).
 
 ## FAQ
 
