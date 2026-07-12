@@ -33,6 +33,10 @@ up:
 down:
     docker compose --env-file .env.development down
 
+# Apply sqlx migrations + dev seed (also runs on API startup)
+migrate:
+    INDIEBASE_ENV=development cargo run -p api -- --migrate-only
+
 # cargo test -p api
 test:
     cargo test -p api
@@ -48,3 +52,24 @@ clippy:
 # cargo fmt
 fmt:
     cargo fmt
+
+# Smoke: login → create project → list → project login (API must be running)
+smoke-login:
+    #!/usr/bin/env zsh
+    set -euo pipefail
+    TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
+      -H 'content-type: application/json' \
+      -d '{"email":"admin@indiebase.local","password":"dev@indiebase.com"}' \
+      | python3 -c 'import sys,json; print(json.load(sys.stdin)["token"])')
+    echo "dashboard token: ${TOKEN:0:16}…"
+    CREATE=$(curl -s -X POST http://localhost:8080/api/projects \
+      -H "authorization: Bearer $TOKEN" \
+      -H 'content-type: application/json' \
+      -d '{"name":"smoke-project"}')
+    echo "$CREATE" | python3 -m json.tool
+    PID=$(echo "$CREATE" | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
+    curl -s http://localhost:8080/api/projects -H "authorization: Bearer $TOKEN" | python3 -m json.tool
+    curl -s -X POST http://localhost:8080/api/auth/project/login \
+      -H "authorization: Bearer $TOKEN" \
+      -H 'content-type: application/json' \
+      -d "{\"project_id\":\"$PID\"}" | python3 -m json.tool

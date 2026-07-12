@@ -17,6 +17,12 @@ pub struct Config {
     pub redis_port: u16,
     pub redis_password: String,
     pub postgrest_url: String,
+    /// Session TTL in seconds for Dashboard and Project opaque tokens.
+    pub session_ttl_secs: u64,
+    /// Host path to PostgREST `db-schemas` list (comma-separated), shared with compose volume.
+    pub postgrest_schemas_file: String,
+    /// Host path to PostgREST config file (file-based so `NOTIFY reload config` re-reads schemas).
+    pub postgrest_config_path: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -61,6 +67,14 @@ impl Config {
             redis_port: optional_port("REDIS_PORT", 6379)?,
             redis_password: required_env("REDIS_PASSWORD")?,
             postgrest_url: required_env("POSTGREST_URL")?,
+            session_ttl_secs: optional_u64(
+                "SESSION_TTL_SECS",
+                crate::constants::session::DEFAULT_SESSION_TTL_SECS,
+            )?,
+            postgrest_schemas_file: env::var("POSTGREST_SCHEMAS_FILE")
+                .unwrap_or_else(|_| "./docker/postgrest/db-schemas".to_string()),
+            postgrest_config_path: env::var("POSTGREST_CONFIG_PATH")
+                .unwrap_or_else(|_| "./docker/postgrest/postgrest.conf".to_string()),
         })
     }
 
@@ -180,6 +194,17 @@ fn optional_port(key: &'static str, default: u16) -> Result<u16, ConfigError> {
         Ok(value) => value.trim().parse().map_err(|_| ConfigError::Invalid {
             key,
             message: format!("expected u16, got {value}"),
+        }),
+    }
+}
+
+fn optional_u64(key: &'static str, default: u64) -> Result<u64, ConfigError> {
+    match env::var(key) {
+        Err(_) => Ok(default),
+        Ok(value) if value.trim().is_empty() => Ok(default),
+        Ok(value) => value.trim().parse().map_err(|_| ConfigError::Invalid {
+            key,
+            message: format!("expected u64, got {value}"),
         }),
     }
 }

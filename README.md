@@ -6,7 +6,7 @@
 [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/deskbtm?style=social)](https://twitter.com/intent/follow?screen_name=deskbtm)
 
 > [!TIP]
-> Early-stage rewrite: Indiebase is being rebuilt on Rust. Phase 0 (`crates/api`) provides an Axum server with `GET /health`, OpenAPI at `/openapi.json`, and Scalar docs at `/docs`.
+> Early-stage rewrite: Indiebase is being rebuilt on Rust. Phase 1 (`crates/api`) adds Dashboard/Project opaque sessions, project create (`proj_{ulid}`), and Manager routes under `/api/auth/*` and `/api/projects`.
 
 Indiebase is a self-hosted BaaS platform for indie developers and small teams.
 
@@ -15,7 +15,8 @@ Indiebase is a self-hosted BaaS platform for indie developers and small teams.
 1. Start infrastructure:
 
    ```bash
-   docker compose --env-file .env.development up -d
+   just up
+   # or: docker compose --env-file .env.development up -d
    ```
 
 2. Configure environment:
@@ -26,7 +27,15 @@ Indiebase is a self-hosted BaaS platform for indie developers and small teams.
 
    Vite-style files via `INDIEBASE_ENV` (default `development`): `.env` → `.env.local` → `.env.[env]` → `.env.[env].local`. Process env wins.
 
-3. Run the API server:
+3. Migrate + seed (also runs on API startup):
+
+   ```bash
+   just migrate
+   ```
+
+   Dev seed user: `admin@indiebase.local` / `dev@indiebase.com`.
+
+4. Run the API server:
 
    ```bash
    just run
@@ -34,22 +43,34 @@ Indiebase is a self-hosted BaaS platform for indie developers and small teams.
    # or: just run-prod
    ```
 
-   Other tasks: `just` (`up` / `down` / `test` / `clippy` / `fmt`). Install: `brew install just`.
+   Other tasks: `just` (`up` / `down` / `migrate` / `smoke-login` / `test` / `clippy` / `fmt`). Install: `brew install just`.
 
-4. Health check:
+5. Health check:
 
    ```bash
    curl -s http://localhost:8080/health
    ```
 
-5. API docs:
+6. API docs:
 
    ```bash
    curl -s http://localhost:8080/openapi.json | head
    open http://localhost:8080/docs   # Scalar UI
    ```
 
-MVP phase breakdown: [docs/prd/mvp-phases.md](./docs/prd/mvp-phases.md) (Phase 0: workspace + health + OpenAPI/Scalar).
+7. Login smoke (API must be running):
+
+   ```bash
+   just smoke-login
+   # or manually:
+   curl -s -X POST http://localhost:8080/api/auth/login \
+     -H 'content-type: application/json' \
+     -d '{"email":"admin@indiebase.local","password":"dev@indiebase.com"}'
+   ```
+
+PostgREST schema reload after project create: [docs/notes/postgrest-schema-reload.md](./docs/notes/postgrest-schema-reload.md).
+
+MVP phase breakdown: [docs/prd/mvp-phases.md](./docs/prd/mvp-phases.md).
 
 Agent / AI workflow: [AGENTS.md](./AGENTS.md).
 

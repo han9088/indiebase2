@@ -5,7 +5,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn openapi_json_returns_spec_with_health_path() {
-    let response = api::app::router()
+    let response = api::app::system_router()
         .oneshot(Request::get("/openapi.json").body(Body::empty()).unwrap())
         .await
         .expect("router should respond");
@@ -40,6 +40,14 @@ async fn openapi_json_returns_spec_with_health_path() {
         spec["paths"].get("/health").is_some(),
         "openapi spec should document /health"
     );
+    assert!(
+        spec["paths"].get("/api/auth/login").is_some(),
+        "openapi spec should document /api/auth/login"
+    );
+    assert!(
+        spec["paths"].get("/api/projects").is_some(),
+        "openapi spec should document /api/projects"
+    );
 
     let health_schema = &spec["components"]["schemas"]["HealthResponse"];
     assert_eq!(
@@ -51,7 +59,7 @@ async fn openapi_json_returns_spec_with_health_path() {
 
 #[tokio::test]
 async fn docs_returns_scalar_html() {
-    let response = api::app::router()
+    let response = api::app::system_router()
         .oneshot(Request::get("/docs").body(Body::empty()).unwrap())
         .await
         .expect("router should respond");
@@ -91,7 +99,7 @@ async fn docs_returns_scalar_html() {
 
 #[tokio::test]
 async fn serves_favicon() {
-    let response = api::app::router()
+    let response = api::app::system_router()
         .oneshot(Request::get("/favicon.ico").body(Body::empty()).unwrap())
         .await
         .expect("router should respond");
@@ -117,7 +125,7 @@ async fn serves_favicon() {
 
 #[tokio::test]
 async fn serves_logo_svg() {
-    let response = api::app::router()
+    let response = api::app::system_router()
         .oneshot(Request::get("/logo.svg").body(Body::empty()).unwrap())
         .await
         .expect("router should respond");
@@ -143,7 +151,7 @@ async fn serves_logo_svg() {
 
 #[tokio::test]
 async fn openapi_includes_x_logo() {
-    let response = api::app::router()
+    let response = api::app::system_router()
         .oneshot(Request::get("/openapi.json").body(Body::empty()).unwrap())
         .await
         .expect("router should respond");

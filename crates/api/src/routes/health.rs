@@ -30,7 +30,7 @@ mod tests {
 
     #[tokio::test]
     async fn health_returns_ok_json() {
-        let response = app::router()
+        let response = app::system_router()
             .oneshot(Request::get("/health").body(Body::empty()).unwrap())
             .await
             .expect("router should respond");

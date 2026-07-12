@@ -47,17 +47,20 @@ services:
     ports:
       - "${POSTGREST_PORT}:3000"
     volumes:
-      - ./docker/postgrest/entrypoint.sh:/entrypoint.sh:ro
+      # Shared with API: schemas list + conf rewritten on project create (NOTIFY reload).
+      - ./docker/postgrest:/config
     secrets:
       - pg_password
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
       PGRST_DB_HOST: ${PGRST_DB_HOST}
       PGRST_DB_PORT: "5432"
       PGRST_OPENAPI_SERVER_PROXY_URI: ${PGRST_OPENAPI_SERVER_PROXY_URI}
-      PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
+      # db-schemas comes from /config/db-schemas via entrypoint → postgrest.conf.
+      # Do NOT set PGRST_DB_SCHEMAS here: env overrides the config file and blocks
+      # NOTIFY reload config from picking up new proj_* schemas.
       PGRST_DB_ANON_ROLE: ${PGRST_DB_ANON_ROLE}
     depends_on:
       - postgres

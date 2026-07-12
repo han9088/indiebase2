@@ -1,6 +1,13 @@
 pub mod app;
 pub mod assets;
+pub mod auth;
 pub mod config;
+pub mod constants;
+pub mod db;
+pub mod error;
+pub mod ids;
 pub mod listen_banner;
 pub mod openapi;
+pub mod projects;
 pub mod routes;
+pub mod state;

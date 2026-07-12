@@ -71,10 +71,10 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 **验收：**
 
-- [ ] Dashboard 登录后调 Manager API 列出 projects
-- [ ] 创建 Project 后 DB 存在 `proj_{ulid}` + `api_keys` 两行
-- [ ] Project 登录后 Redis 有 `project_session:{token}` 且含正确 `project_id`
-- [ ] PostgREST reload 后新 schema 可达（内网 smoke）
+- [x] Dashboard 登录后调 Manager API 列出 projects
+- [x] 创建 Project 后 DB 存在 `proj_{ulid}` + `api_keys` 两行
+- [x] Project 登录后 Redis 有 `project_session:{token}` 且含正确 `project_id`
+- [x] PostgREST reload 后新 schema 可达（内网 smoke）— 见 `docs/notes/postgrest-schema-reload.md`（`pg_notify` + schemas 文件）
 
 **依赖：** Phase 0。
 
