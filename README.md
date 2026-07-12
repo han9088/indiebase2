@@ -15,23 +15,26 @@ Indiebase is a self-hosted BaaS platform for indie developers and small teams.
 1. Start infrastructure:
 
    ```bash
-   docker compose --env-file .env.dev up -d
+   docker compose --env-file .env.development up -d
    ```
 
 2. Configure environment:
 
    ```bash
-   cp .env.example .env.dev
+   cp .env.example .env.development
    ```
 
-   The API reads `INDIEBASE_ENV` (default `dev`) and loads only `.env.{env}` (e.g. `.env.dev`). No shared `.env`.
+   Vite-style files via `INDIEBASE_ENV` (default `development`): `.env` → `.env.local` → `.env.[env]` → `.env.[env].local`. Process env wins.
 
 3. Run the API server:
 
    ```bash
-   cargo run -p api
-   # or: INDIEBASE_ENV=dev cargo run -p api
+   just run
+   # or: just watch          # reload on change (needs cargo-watch)
+   # or: just run-prod
    ```
+
+   Other tasks: `just` (`up` / `down` / `test` / `clippy` / `fmt`). Install: `brew install just`.
 
 4. Health check:
 

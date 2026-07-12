@@ -5,8 +5,8 @@ use std::path::Path;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config {
-    /// Active mode (`development` default), Vite-style.
-    pub mode: String,
+    /// Active environment (`development` default), Vite-style.
+    pub env: String,
     pub http_addr: String,
     pub postgres_host: String,
     pub postgres_port: u16,
@@ -42,14 +42,14 @@ impl std::error::Error for ConfigError {}
 
 impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
-        let mode = resolve_indiebase_mode();
-        load_dotenv_for_mode(&mode);
+        let indiebase_env = resolve_indiebase_env();
+        load_dotenv_for_env(&indiebase_env);
         Self::from_env_vars()
     }
 
     pub(crate) fn from_env_vars() -> Result<Self, ConfigError> {
         Ok(Self {
-            mode: resolve_indiebase_mode(),
+            env: resolve_indiebase_env(),
             http_addr: env::var("INDIEBASE_HTTP_ADDR")
                 .unwrap_or_else(|_| "0.0.0.0:8080".to_string()),
             postgres_host: required_env("POSTGRES_HOST")?,
@@ -87,9 +87,9 @@ impl Config {
     }
 }
 
-/// Active mode — Vite-style (`development` default). See INDIEBASE_MODE.
-pub(crate) fn resolve_indiebase_mode() -> String {
-    match env::var("INDIEBASE_MODE") {
+/// Active environment — Vite-style (`development` default). See INDIEBASE_ENV.
+pub(crate) fn resolve_indiebase_env() -> String {
+    match env::var("INDIEBASE_ENV") {
         Ok(value) => {
             let trimmed = value.trim();
             if trimmed.is_empty() {
@@ -103,18 +103,18 @@ pub(crate) fn resolve_indiebase_mode() -> String {
 }
 
 /// Load env files like Vite:
-/// `.env` < `.env.local` < `.env.[mode]` < `.env.[mode].local`
+/// `.env` < `.env.local` < `.env.[env]` < `.env.[env].local`
 /// Process env already set wins (not overwritten).
 ///
 /// Spec: https://cn.vite.dev/guide/env-and-mode
-pub(crate) fn load_dotenv_for_mode(mode: &str) {
+pub(crate) fn load_dotenv_for_env(indiebase_env: &str) {
     let mut merged: HashMap<String, String> = HashMap::new();
 
     for path in [
         ".env".to_string(),
         ".env.local".to_string(),
-        format!(".env.{mode}"),
-        format!(".env.{mode}.local"),
+        format!(".env.{indiebase_env}"),
+        format!(".env.{indiebase_env}.local"),
     ] {
         merge_dotenv_file(&mut merged, &path);
     }
@@ -215,10 +215,10 @@ mod tests {
         "REDIS_PASSWORD",
         "POSTGREST_URL",
         "INDIEBASE_HTTP_ADDR",
-        "INDIEBASE_MODE",
         "INDIEBASE_ENV",
+        "INDIEBASE_MODE",
         "ONLY_IN_BASE",
-        "ONLY_IN_MODE",
+        "ONLY_IN_ENV",
         "SHARED_KEY",
         "DATABASE_URL",
         "REDIS_URL",
@@ -280,7 +280,7 @@ mod tests {
             set_valid_connection_env();
 
             let config = Config::from_env_vars().expect("config should load");
-            assert_eq!(config.mode, "development");
+            assert_eq!(config.env, "development");
             assert_eq!(config.http_addr, "0.0.0.0:8080");
             assert_eq!(config.postgres_host, "postgres.indiebase2.orb.local");
             assert_eq!(config.postgres_port, 5432);
@@ -297,24 +297,24 @@ mod tests {
     }
 
     #[test]
-    fn defaults_mode_to_development() {
+    fn defaults_env_to_development() {
         with_isolated_env(|| {
-            assert_eq!(resolve_indiebase_mode(), "development");
+            assert_eq!(resolve_indiebase_env(), "development");
         });
     }
 
     #[test]
-    fn reads_explicit_mode() {
+    fn reads_explicit_env() {
         with_isolated_env(|| {
             unsafe {
-                env::set_var("INDIEBASE_MODE", "production");
+                env::set_var("INDIEBASE_ENV", "production");
             }
-            assert_eq!(resolve_indiebase_mode(), "production");
+            assert_eq!(resolve_indiebase_env(), "production");
         });
     }
 
     #[test]
-    fn mode_file_overrides_base_env_file() {
+    fn env_file_overrides_base_env_file() {
         with_isolated_env(|| {
             let dir = env::temp_dir().join(format!(
                 "indiebase-env-test-{}-{}",
@@ -331,20 +331,20 @@ mod tests {
             .unwrap();
             fs::write(
                 dir.join(".env.development"),
-                "SHARED_KEY=from-mode\nONLY_IN_MODE=mode\nPOSTGRES_HOST=from-mode\n",
+                "SHARED_KEY=from-env\nONLY_IN_ENV=env\nPOSTGRES_HOST=from-env\n",
             )
             .unwrap();
 
             let previous = env::current_dir().unwrap();
             env::set_current_dir(&dir).unwrap();
-            load_dotenv_for_mode("development");
+            load_dotenv_for_env("development");
             env::set_current_dir(previous).unwrap();
             let _ = fs::remove_dir_all(&dir);
 
-            assert_eq!(env::var("SHARED_KEY").unwrap(), "from-mode");
+            assert_eq!(env::var("SHARED_KEY").unwrap(), "from-env");
             assert_eq!(env::var("ONLY_IN_BASE").unwrap(), "base");
-            assert_eq!(env::var("ONLY_IN_MODE").unwrap(), "mode");
-            assert_eq!(env::var("POSTGRES_HOST").unwrap(), "from-mode");
+            assert_eq!(env::var("ONLY_IN_ENV").unwrap(), "env");
+            assert_eq!(env::var("POSTGRES_HOST").unwrap(), "from-env");
         });
     }
 
@@ -366,7 +366,7 @@ mod tests {
 
             let previous = env::current_dir().unwrap();
             env::set_current_dir(&dir).unwrap();
-            load_dotenv_for_mode("development");
+            load_dotenv_for_env("development");
             env::set_current_dir(previous).unwrap();
             let _ = fs::remove_dir_all(&dir);
 

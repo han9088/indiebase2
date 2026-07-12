@@ -41,8 +41,8 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | Cargo workspace | 根 `Cargo.toml`；crate `crates/api` |
 | Axum 壳 | `GET /health` → 200 |
 | API 文档 | `utoipa` 生成 OpenAPI；`GET /openapi.json`；Scalar UI `GET /docs` |
-| 开发方式 | **TDD**：先写集成测试再实现（见 `.cursor/rules/backend-tdd-prd.mdc`） |
-| 配置 | `INDIEBASE_ENV`（默认 `dev`）；只读 `.env.{env}`（如 `.env.dev`）；Postgres / Redis 离散字段 |
+| 开发方式 | 实现为主；测试按需补充（见 `.cursor/rules/backend-tdd-prd.mdc`） |
+| 配置 | `INDIEBASE_ENV`（默认 `development`；另支持 `production`）；Vite 四层 dotenv；Postgres / Redis 离散字段 |
 | 本地栈 | 已有 `docker compose`：Postgres 17、Redis 6、PostgREST |
 
 **验收：**

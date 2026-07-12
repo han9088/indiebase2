@@ -1,0 +1,36 @@
+---
+description: PRD sync when product behavior changes; API docs conventions
+alwaysApply: true
+---
+
+# PRD sync + API docs
+
+## PRD sync (mandatory when behavior changes)
+
+If implementation changes **observable product behavior** (routes, env vars, auth/session rules, phase scope, SDK contract, PostgREST/RLS semantics), update PRD in the **same change** — do not defer.
+
+| Topic | PRD file |
+|-------|----------|
+| MVP phase scope & acceptance | `docs/prd/mvp-phases.md` |
+| Architecture, sessions, Data API | `docs/prd/baas-platform-architecture.md` |
+| TS SDK contract | `docs/prd/mvp-sdk.md` |
+| Post-MVP backlog | `docs/prd/todo.md` |
+
+**Sync checklist:**
+
+- New/changed HTTP path → mvp-phases + architecture if cross-cutting
+- New env var → `.env.example` + mvp-phases or architecture config table
+- Auth or credential rules → architecture §6+
+- Phase completion criteria → mvp-phases acceptance bullets
+
+**Not PRD:** pure refactors, internal module layout, test-only changes.
+
+## Tests (optional)
+
+Tests are welcome for regressable backend behavior (`crates/<crate>/tests/*.rs` or `#[cfg(test)]`), but **not required before implementing**. Prefer covering new HTTP routes when practical.
+
+## API docs convention
+
+- OpenAPI: code-first via `utoipa`; spec at `GET /openapi.json`
+- Interactive docs: Scalar at `GET /docs`
+- New routes: `#[utoipa::path]`; add a covering test when useful

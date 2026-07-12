@@ -7,9 +7,9 @@ alwaysApply: true
 
 - **Language / runtime**: Rust (Cargo workspace). Prefer idiomatic Rust; use `cargo` for build, test, and lint.
 - **Lint / format**: `cargo fmt` + `cargo clippy`. Match existing module and import style in the crate.
-- **Tests / PRD**: Optional guidance in `.cursor/rules/backend-tdd-prd.mdc` — not a gate before edits.
-- **OpenSpec**: Optional; only when the user asks (see `.cursor/rules/openspec-workflow.mdc`).
-- **Docker**: Local stack via `docker compose` at repo root; env in `.env` (see `docker-compose.yaml`).
+- **PRD sync**: Update `docs/prd/` in the same change when routes, env, auth, or phase acceptance change (see `.cursor/rules/backend-tdd-prd.mdc`).
+- **Tests**: Optional — not a gate before edits.
+- **Docker**: Local stack via `docker compose` at repo root; env via `INDIEBASE_ENV` + `.env.development` (see `docker-compose.yaml`).
 - **Edits**: Change only what the task requires; ship directly unless the user asks for planning.
 - **Agent guide**: See root [`AGENTS.md`](../../AGENTS.md).
 - **Language**: Reply to the user in **Simplified Chinese**. **Source code, comments, and commit messages in English.**

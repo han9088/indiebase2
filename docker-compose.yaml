@@ -1,4 +1,4 @@
-# Local development: `docker compose --env-file .env.dev up -d`
+# Local development: `docker compose --env-file .env.development up -d`
 
 x-logging: &x-logging
   logging:

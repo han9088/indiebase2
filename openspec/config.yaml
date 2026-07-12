@@ -10,9 +10,10 @@ context: |
   Isolation: schema-per-project as proj_{ulid}; platform tables in public schema.
   Auth: no JWT. Dashboard + Project login: Opaque Token + Redis.
   Optional object storage: SeaweedFS S3 under docker/seaweedfs/ (separate compose, not in root stack).
-  Local infra: `docker compose --env-file .env.development up -d`; Vite-style env modes via INDIEBASE_MODE.
+  Local infra: `docker compose --env-file .env.development up -d`; Vite-style env via INDIEBASE_ENV (development|production).
   Lint/format: `cargo fmt`, `cargo clippy`; tests via `cargo test`.
-  Tests/PRD: optional guidance (see `.cursor/rules/backend-tdd-prd.mdc`); not required before every edit.
+  Tests: optional — not required before every edit (see `.cursor/rules/backend-tdd-prd.mdc`).
+  PRD sync: when routes, env, auth, phase scope, or SDK contract change, update `docs/prd/` in the same change.
   Docs language: reply to users in Simplified Chinese; source code, comments, and commit messages in English.
   OpenSpec: optional — only when the user asks for OPSX; then explore → propose → apply → sync → archive.
   Brownfield: delta specs only; do not back-fill specs for untouched code.
@@ -26,7 +27,6 @@ rules:
     - Call out Postgres schema / PostgREST / RLS impacts when touching data
   tasks:
     - Break into chunks that can be verified independently
-    - TDD order: failing test task before implementation task for each behavior
     - Include PRD sync task when product behavior or acceptance criteria change
     - Include `cargo test` / `cargo clippy` verification steps where relevant
   specs:

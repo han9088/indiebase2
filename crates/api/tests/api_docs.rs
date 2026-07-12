@@ -79,4 +79,83 @@ async fn docs_returns_scalar_html() {
         html.contains("scalar") || html.contains("Scalar"),
         "docs page should reference Scalar"
     );
+    assert!(
+        html.contains("/favicon.ico"),
+        "docs page should reference favicon"
+    );
+    assert!(
+        html.contains("/logo.svg"),
+        "docs page should reference logo"
+    );
+}
+
+#[tokio::test]
+async fn serves_favicon() {
+    let response = api::app::router()
+        .oneshot(Request::get("/favicon.ico").body(Body::empty()).unwrap())
+        .await
+        .expect("router should respond");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    assert!(
+        content_type.contains("image/") || content_type.contains("icon"),
+        "expected image content-type, got {content_type}"
+    );
+    let body = response
+        .into_body()
+        .collect()
+        .await
+        .expect("body")
+        .to_bytes();
+    assert!(!body.is_empty(), "favicon should not be empty");
+}
+
+#[tokio::test]
+async fn serves_logo_svg() {
+    let response = api::app::router()
+        .oneshot(Request::get("/logo.svg").body(Body::empty()).unwrap())
+        .await
+        .expect("router should respond");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    assert!(
+        content_type.contains("svg") || content_type.contains("image/"),
+        "expected svg content-type, got {content_type}"
+    );
+    let body = response
+        .into_body()
+        .collect()
+        .await
+        .expect("body")
+        .to_bytes();
+    assert!(!body.is_empty(), "logo.svg should not be empty");
+}
+
+#[tokio::test]
+async fn openapi_includes_x_logo() {
+    let response = api::app::router()
+        .oneshot(Request::get("/openapi.json").body(Body::empty()).unwrap())
+        .await
+        .expect("router should respond");
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response
+        .into_body()
+        .collect()
+        .await
+        .expect("body")
+        .to_bytes();
+    let spec: serde_json::Value = serde_json::from_slice(&body).expect("json");
+    let logo = &spec["info"]["x-logo"];
+    assert_eq!(logo["url"].as_str(), Some("/logo.svg"));
+    assert_eq!(logo["altText"].as_str(), Some("Indiebase"));
 }

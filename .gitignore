@@ -10,11 +10,10 @@ dist
 logs
 *.log
 
-# dotenv environment variable files
-.env
-.env.*
-!.env.example
+# dotenv — Vite-style: only *.local hold secrets / machine overrides
+# https://cn.vite.dev/guide/env-and-mode
 .env.local
+.env.*.local
 
 # IntelliJ based IDEs
 .idea
