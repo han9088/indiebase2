@@ -1,35 +1,42 @@
-# PostgREST schema registration + reload (Phase 1)
+# PostgREST schema sync + reload
 
-## Chosen approach
+## Model
 
-1. **Schemas list file** — `POSTGREST_SCHEMAS_FILE` (default `./docker/postgrest/db-schemas`), comma-separated (`public,proj_…`). Mounted into the PostgREST container as `/config/db-schemas`.
-2. **File-based PostgREST config** — `POSTGREST_CONFIG_PATH` (default `./docker/postgrest/postgrest.conf`). Entrypoint writes `db-uri` / `db-schemas` / `db-anon-role` on start; the API **only updates the `db-schemas` line** after project create (never drops `db-uri`) so `NOTIFY reload config` re-reads the list.
-3. **Reload** — after appending the new `proj_{ulid}` schema, the API runs:
-   - `SELECT pg_notify('pgrst', 'reload config');`
-   - `SELECT pg_notify('pgrst', 'reload schema');`
+- **Source of truth:** `public.projects` (`deleted_at IS NULL` → schema `proj_{id}`).
+- **Delivery:** PostgREST in-DB config via `db-pre-config = public.indiebase_pre_config`, which runs:
 
-If the schemas/config file update fails (permissions, path), create still succeeds and logs a warning; operators can restart the `postgrest` compose service as a fallback.
+```sql
+PERFORM set_config('pgrst.db_schemas', 'public,proj_…', true);
+```
 
-**Compose pitfall:** do not set `PGRST_DB_SCHEMAS` on the PostgREST service — env vars override the config file, so `NOTIFY reload config` would keep exposing only the env value (e.g. `public`).
+derived from `projects`. After create / API startup we only:
 
-## Alternatives considered
+```sql
+NOTIFY pgrst, 'reload config';
+NOTIFY pgrst, 'reload schema';
+```
 
-| Option | Why not for Phase 1 |
-|--------|---------------------|
-| Static `PGRST_DB_SCHEMAS` only | New project schemas never appear without container restart + env edit |
-| `PGRST_DB_SCHEMAS=*` | Not supported as a dynamic “all schemas” wildcard for this use case |
-| Admin HTTP reload only | Less reliable across compose networking; NOTIFY is the documented PostgREST path |
+No `db-schemas` file and no API rewriting of schema lists in conf.
+
+## Entrypoint conf (secrets only)
+
+`docker/postgrest/entrypoint.sh` still writes a **minimal** `postgrest.conf` for `db-uri`, JWT, `db-pre-config`, `db-pre-request`. Bootstrap `db-schemas = "public"` is overridden by `indiebase_pre_config` on load/reload.
+
+**Compose pitfall:** do not set `PGRST_DB_SCHEMAS` on the PostgREST service — env would override in-DB config.
 
 ## Local smoke
 
-After `just up` + `just run` and creating a project:
-
 ```bash
-# schemas file should include proj_{ulid}
-cat docker/postgrest/db-schemas
-
-# PostgREST OpenAPI lists the schema (may take a moment after NOTIFY)
+just up && just run
+# create a project, then:
 curl -s "$POSTGREST_URL/" | head
 ```
 
 Manual fallback: `docker compose --env-file .env.development restart postgrest`.
+
+## Env (Data API)
+
+| Variable | Purpose |
+|----------|---------|
+| `POSTGREST_JWT_SECRET` | HS256 secret shared by API (authenticator JWT) and PostgREST `jwt-secret` |
+| `INDIEBASE_INTERNAL_CONTEXT_SECRET` | HMAC secret for `X-Indiebase-Internal-Context` (API + `gateway_config` row) |

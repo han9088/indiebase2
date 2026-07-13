@@ -3,6 +3,7 @@ pub mod assets;
 pub mod auth;
 pub mod config;
 pub mod constants;
+pub mod data;
 pub mod db;
 pub mod error;
 pub mod ids;

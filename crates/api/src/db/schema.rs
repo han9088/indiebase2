@@ -217,6 +217,15 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'project_operator_readonly') THEN
         CREATE ROLE project_operator_readonly NOLOGIN;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticator') THEN
+        CREATE ROLE authenticator NOLOGIN NOINHERIT;
+    END IF;
+
+    GRANT anon TO authenticator;
+    GRANT authenticated TO authenticator;
+    GRANT service TO authenticator;
+    GRANT project_operator TO authenticator;
+    GRANT project_operator_readonly TO authenticator;
 END
 $$;
 "#;

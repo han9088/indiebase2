@@ -114,13 +114,7 @@ pub async fn create(
     auth: DashboardAuth,
     Json(body): Json<CreateProjectRequest>,
 ) -> Result<Json<CreateProjectResponse>, ApiError> {
-    let created = create_project(
-        &state.pool,
-        state.config.as_ref(),
-        &auth.session.user_id,
-        &body.name,
-    )
-    .await?;
+    let created = create_project(&state.pool, &auth.session.user_id, &body.name).await?;
 
     Ok(Json(CreateProjectResponse {
         id: created.id,

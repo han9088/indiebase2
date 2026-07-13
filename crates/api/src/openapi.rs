@@ -55,13 +55,11 @@ impl Modify for BearerSecurity {
         title = "Indiebase Manager API",
         version = "0.1.0",
         description = "Indiebase is a self-hosted BaaS for indie teams.\n\n\
-            **This document covers the Manager API** (Dashboard auth, projects, and platform \
-            governance). Tenant CRUD goes through the Data API (`/api/data/*`) and is not fully \
-            documented here yet.\n\n\
-            **Auth model:** One **Dashboard Session** (Opaque Token + Redis) — no JWT, no second \
-            Project login. Project context is supplied per request with \
-            `X-Indiebase-Project-Id` (or `project_id` in the URL for nested Manager routes). \
-            Membership is resolved via `project_members` on each request.",
+            **Manager API** covers Dashboard auth and projects. **Data API** (`/api/data/*`) is a \
+            PostgREST gateway: SDK path `/api/data/{project_id}/*` uses API keys; Dashboard path \
+            `/api/data/*` uses Dashboard Session + `X-Indiebase-Project-Id`.\n\n\
+            **Auth model:** Opaque Token + Redis (no JWT for clients). Project context via header \
+            or URL ULID. Membership is resolved via `project_members` on each request.",
         contact(name = "Indiebase", url = "https://indiebase.deskbtm.com")
     ),
     modifiers(&IndiebaseLogo, &BearerSecurity),
@@ -72,6 +70,8 @@ impl Modify for BearerSecurity {
         crate::routes::auth::project_context,
         crate::routes::projects::create,
         crate::routes::projects::list,
+        crate::routes::data::data_api_sdk_get_docs,
+        crate::routes::data::data_api_dashboard_get_docs,
     ),
     components(schemas(
         HealthResponse,
@@ -88,7 +88,8 @@ impl Modify for BearerSecurity {
     tags(
         (name = "system", description = "Liveness probes and documentation endpoints"),
         (name = "auth", description = "Dashboard Session (Opaque Token + Redis); project context via header"),
-        (name = "projects", description = "Project lifecycle on the Manager API (create, list, membership)")
+        (name = "projects", description = "Project lifecycle on the Manager API (create, list, membership)"),
+        (name = "data-api", description = "PostgREST Data API gateway (Dashboard + SDK dual path)")
     )
 )]
 pub struct ApiDoc;

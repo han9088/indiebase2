@@ -26,7 +26,6 @@ pub struct ProjectListItem {
 
 pub async fn create_project(
     pool: &PgPool,
-    config: &crate::config::Config,
     owner_user_id: &str,
     name: &str,
 ) -> Result<CreatedProject, ApiError> {
@@ -100,7 +99,7 @@ pub async fn create_project(
         return Err(err);
     }
 
-    postgrest::register_schema_and_reload(pool, config, &schema).await?;
+    postgrest::sync_schemas_from_projects_and_reload(pool).await?;
 
     Ok(CreatedProject {
         id: project_id,

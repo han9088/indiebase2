@@ -6,6 +6,7 @@
 use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 
+use super::gateway_sql::{self, gateway_sql_hash_input};
 use super::schema::{platform_table_statements, TENANT_ROLES_SQL};
 
 const SYNC_META_SQL: &str = r#"
@@ -23,7 +24,35 @@ fn schema_hash(statements: &[String]) -> String {
         hasher.update(b"\n");
     }
     hasher.update(TENANT_ROLES_SQL.as_bytes());
+    hasher.update(gateway_sql_hash_input().as_bytes());
     hex::encode(hasher.finalize())
+}
+
+pub async fn ensure_tenant_roles_and_gateway(pool: &PgPool) -> Result<(), String> {
+    sqlx::query(TENANT_ROLES_SQL)
+        .execute(pool)
+        .await
+        .map_err(|err| format!("tenant roles ensure failed: {err}"))?;
+    gateway_sql::apply_data_api_gateway_sql(pool).await?;
+    Ok(())
+}
+
+/// Upsert the Internal-Context HMAC secret for `indiebase_pre_request`.
+pub async fn upsert_internal_context_secret(pool: &PgPool, secret: &str) -> Result<(), String> {
+    sqlx::query(
+        r#"
+        INSERT INTO public.gateway_config (key, value, updated_at)
+        VALUES ('internal_context_secret', $1, now())
+        ON CONFLICT (key) DO UPDATE
+        SET value = EXCLUDED.value,
+            updated_at = now()
+        "#,
+    )
+    .bind(secret)
+    .execute(pool)
+    .await
+    .map_err(|err| format!("gateway_config secret upsert failed: {err}"))?;
+    Ok(())
 }
 
 /// Recreate platform tables from SeaQuery when the DDL hash changes.
@@ -44,11 +73,7 @@ pub async fn synchronize_platform_schema(pool: &PgPool) -> Result<(), String> {
 
     if current.as_deref() == Some(hash.as_str()) {
         tracing::debug!(%hash, "platform schema already synchronized");
-        // Roles are idempotent; cheap to ensure on every boot.
-        sqlx::query(TENANT_ROLES_SQL)
-            .execute(pool)
-            .await
-            .map_err(|err| format!("tenant roles ensure failed: {err}"))?;
+        ensure_tenant_roles_and_gateway(pool).await?;
         return Ok(());
     }
 
@@ -73,10 +98,7 @@ pub async fn synchronize_platform_schema(pool: &PgPool) -> Result<(), String> {
             .map_err(|err| format!("schema sync apply failed: {err}\nSQL: {stmt}"))?;
     }
 
-    sqlx::query(TENANT_ROLES_SQL)
-        .execute(pool)
-        .await
-        .map_err(|err| format!("tenant roles ensure failed: {err}"))?;
+    ensure_tenant_roles_and_gateway(pool).await?;
 
     sqlx::query(
         r#"

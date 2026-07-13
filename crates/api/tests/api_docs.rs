@@ -48,6 +48,16 @@ async fn openapi_json_returns_spec_with_health_path() {
         spec["paths"].get("/api/projects").is_some(),
         "openapi spec should document /api/projects"
     );
+    assert!(
+        spec["paths"]
+            .get("/api/data/{project_id}/{table}")
+            .is_some(),
+        "openapi spec should document SDK Data API path"
+    );
+    assert!(
+        spec["paths"].get("/api/data/{table}").is_some(),
+        "openapi spec should document Dashboard Data API path"
+    );
 
     assert_eq!(
         spec["info"]["title"].as_str(),

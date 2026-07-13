@@ -47,7 +47,8 @@ services:
     ports:
       - "${POSTGREST_PORT}:3000"
     volumes:
-      # Shared with API: schemas list + conf rewritten on project create (NOTIFY reload).
+      # Entrypoint writes minimal conf (db-uri / jwt / pre-config / pre-request).
+      # Schema list is dynamic via public.indiebase_pre_config + NOTIFY reload.
       - ./docker/postgrest:/config
     secrets:
       - pg_password
@@ -58,10 +59,10 @@ services:
       PGRST_DB_HOST: ${PGRST_DB_HOST}
       PGRST_DB_PORT: "5432"
       PGRST_OPENAPI_SERVER_PROXY_URI: ${PGRST_OPENAPI_SERVER_PROXY_URI}
-      # db-schemas comes from /config/db-schemas via entrypoint → postgrest.conf.
-      # Do NOT set PGRST_DB_SCHEMAS here: env overrides the config file and blocks
-      # NOTIFY reload config from picking up new proj_* schemas.
+      # Do NOT set PGRST_DB_SCHEMAS: in-DB pre_config sets pgrst.db_schemas from projects.
       PGRST_DB_ANON_ROLE: ${PGRST_DB_ANON_ROLE}
+      # Must match API POSTGREST_JWT_SECRET (authenticator JWT HS256).
+      POSTGREST_JWT_SECRET: ${POSTGREST_JWT_SECRET}
     depends_on:
       - postgres
 

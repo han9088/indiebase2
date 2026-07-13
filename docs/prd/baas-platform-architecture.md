@@ -562,7 +562,7 @@ PostgreSQL (indiebase-dev)
 2. `CREATE SCHEMA proj_{ulid}`
 3. 创建租户 DB roles 并授权：`anon`、`authenticated`、`service`（BYPASSRLS）、`project_operator`、`project_operator_readonly`（见 §11.11）
 4. 签发默认 **API Key** 对（**Publishable** + **Secret**；见 §11.2）
-5. 将新 schema 注册至 PostgREST（更新 `PGRST_DB_SCHEMAS` 或等效机制）并 **reload PostgREST**
+5. 将新 schema 对 PostgREST 可见：`public.indiebase_pre_config` 从 `projects` 设置 `pgrst.db_schemas`，并 `NOTIFY pgrst, 'reload config|schema'`
 
 Table Designer 的 DDL 在对应 `proj_{ulid}` 内执行；Metadata 存 `public`。建表时 Axum **同步应用 MVP bootstrap RLS 策略**（见 §11.3）。
 

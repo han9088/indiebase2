@@ -1,8 +1,9 @@
 pub mod auth;
+pub mod data;
 pub mod health;
 pub mod projects;
 
-use axum::routing::{get, post};
+use axum::routing::{any, get, post};
 use axum::Router;
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
@@ -27,11 +28,13 @@ pub fn docs_routes() -> Router {
         )
 }
 
-/// Manager API routes under `/api` (Dashboard Session; project via header or path).
+/// Manager + Data API routes under `/api`.
 pub fn api_routes() -> Router<AppState> {
     Router::new()
         .route("/auth/login", post(auth::login))
         .route("/auth/logout", post(auth::logout))
         .route("/auth/project-context", get(auth::project_context))
         .route("/projects", get(projects::list).post(projects::create))
+        // Dual-path Data API: ULID first segment → SDK; otherwise Dashboard (§6.2.3).
+        .route("/data/{*path}", any(data::proxy_data))
 }

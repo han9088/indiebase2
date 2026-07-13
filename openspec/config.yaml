@@ -11,7 +11,8 @@ context: |
   MVP TS SDK: docs/prd/mvp-sdk.md — @supabase/postgrest-js thin wrapper; base `/api/data/{projectId}` + Publishable Key.
   Architecture source of truth: docs/prd/baas-platform-architecture.md. Delivery checklist: docs/prd/mvp-phases.md (product tracking only — do NOT name OpenSpec changes after Phase N).
   Capability vocabulary (main specs today): server-bootstrap, env-config, api-docs, platform-auth, project-lifecycle.
-  Planned capability names for future changes (not main specs until shipped): data-api-gateway, metadata-table-designer, storage-opendal-fs, app-user-session, ts-sdk.
+  Planned capability names for future changes (not main specs until shipped): metadata-table-designer, storage-opendal-fs, app-user-session, ts-sdk.
+  In-progress / apply-ready changes may already include: data-api-gateway.
   Local infra: `docker compose --env-file .env.development up -d`; Vite-style env via INDIEBASE_ENV (development|production).
   Lint/format: `cargo fmt`, `cargo clippy`; tests via `cargo test` (optional before edits).
   PRD sync: when routes, env, auth, acceptance, or SDK contract change, update docs/prd/ in the same change.

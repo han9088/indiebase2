@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Status | Draft |
-| Last updated | 2026-07-13 |
+| Last updated | 2026-07-14 |
 | Parent | [baas-platform-architecture.md](./baas-platform-architecture.md) |
 | Client SDK | [mvp-sdk.md](./mvp-sdk.md) |
 | 后续能力 | [todo.md](./todo.md)（**不在** MVP） |
@@ -97,11 +97,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 **验收：**
 
-- [ ] Secret Key：`GET /api/data/{id}/users` 代理成功（service role）
-- [ ] Publishable Key：同路径可用；Key 与 URL project 不一致 → 403
-- [ ] Dashboard + project 头：`GET /api/data/users` 可用；带 `X-Indiebase-Api-Key` → 403
-- [ ] SDK URL + Dashboard Session Bearer → 403
-- [ ] 内网 PostgREST 不对公网（生产不 publish 端口）
+- [x] Secret Key：`GET /api/data/{id}/users` 代理成功（service role）
+- [x] Publishable Key：同路径可用；Key 与 URL project 不一致 → 403
+- [x] Dashboard + project 头：`GET /api/data/users` 可用；带 `X-Indiebase-Api-Key` → 403
+- [x] SDK URL + Dashboard Session Bearer → 403
+- [x] 内网 PostgREST 不对公网（生产不 publish 端口）
 
 **依赖：** Phase 1（schema、Key、Session 存在）。
 

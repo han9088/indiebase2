@@ -6,6 +6,7 @@ use sqlx::PgPool;
 use crate::config::Config;
 use crate::constants::auth::{DEV_SEED_EMAIL, DEV_SEED_PASSWORD};
 
+pub mod gateway_sql;
 pub mod schema;
 pub mod sync;
 
@@ -40,12 +41,16 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), String> {
 ///
 /// Development mirrors TypeORM `synchronize: true` — DDL hash changes recreate platform tables
 /// (no backward-compat). Production uses versioned sqlx migrations only.
+/// Always ensures tenant roles, `db-pre-request`, and Internal-Context secret.
 pub async fn prepare_schema(pool: &PgPool, config: &Config) -> Result<(), String> {
     if config.env == "development" {
-        sync::synchronize_platform_schema(pool).await
+        sync::synchronize_platform_schema(pool).await?;
     } else {
-        run_migrations(pool).await
+        run_migrations(pool).await?;
+        sync::ensure_tenant_roles_and_gateway(pool).await?;
     }
+    sync::upsert_internal_context_secret(pool, &config.internal_context_secret).await?;
+    Ok(())
 }
 
 /// Seed a local platform user in development when none exists for the seed email.

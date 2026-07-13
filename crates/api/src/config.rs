@@ -19,10 +19,10 @@ pub struct Config {
     pub postgrest_url: String,
     /// Session TTL in seconds for Dashboard and Project opaque tokens.
     pub session_ttl_secs: u64,
-    /// Host path to PostgREST `db-schemas` list (comma-separated), shared with compose volume.
-    pub postgrest_schemas_file: String,
-    /// Host path to PostgREST config file (file-based so `NOTIFY reload config` re-reads schemas).
-    pub postgrest_config_path: String,
+    /// HMAC secret for signed `X-Indiebase-Internal-Context` (gateway ↔ db-pre-request).
+    pub internal_context_secret: String,
+    /// HS256 secret for short-lived PostgREST authenticator JWTs (`role=authenticator`).
+    pub postgrest_jwt_secret: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,10 +71,8 @@ impl Config {
                 "SESSION_TTL_SECS",
                 crate::constants::session::DEFAULT_SESSION_TTL_SECS,
             )?,
-            postgrest_schemas_file: env::var("POSTGREST_SCHEMAS_FILE")
-                .unwrap_or_else(|_| "./docker/postgrest/db-schemas".to_string()),
-            postgrest_config_path: env::var("POSTGREST_CONFIG_PATH")
-                .unwrap_or_else(|_| "./docker/postgrest/postgrest.conf".to_string()),
+            internal_context_secret: required_env("INDIEBASE_INTERNAL_CONTEXT_SECRET")?,
+            postgrest_jwt_secret: required_env("POSTGREST_JWT_SECRET")?,
         })
     }
 
@@ -242,6 +240,8 @@ mod tests {
         "INDIEBASE_HTTP_ADDR",
         "INDIEBASE_ENV",
         "INDIEBASE_MODE",
+        "INDIEBASE_INTERNAL_CONTEXT_SECRET",
+        "POSTGREST_JWT_SECRET",
         "ONLY_IN_BASE",
         "ONLY_IN_ENV",
         "SHARED_KEY",
@@ -268,6 +268,11 @@ mod tests {
             env::set_var("REDIS_HOST", "localhost");
             env::set_var("REDIS_PASSWORD", "dev@indiebase.com");
             env::set_var("POSTGREST_URL", "http://localhost:13000");
+            env::set_var(
+                "INDIEBASE_INTERNAL_CONTEXT_SECRET",
+                "dev-internal-context-secret",
+            );
+            env::set_var("POSTGREST_JWT_SECRET", "dev-postgrest-jwt-secret");
         }
     }
 

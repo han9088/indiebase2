@@ -25,6 +25,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     prepare_schema(&pool, &config).await?;
     ensure_dev_seed_user(&pool, &config).await?;
 
+    // Ask PostgREST to re-run indiebase_pre_config (schemas from projects).
+    if let Err(err) = api::projects::postgrest::sync_schemas_from_projects_and_reload(&pool).await {
+        tracing::warn!(
+            error = %err,
+            "PostgREST schema reload failed at startup; create-project will retry"
+        );
+    }
+
     if migrate_only {
         tracing::info!("schema prepared; exiting (--migrate-only)");
         return Ok(());
