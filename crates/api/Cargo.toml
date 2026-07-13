@@ -22,6 +22,7 @@ tracing-subscriber.workspace = true
 utoipa.workspace = true
 utoipa-scalar.workspace = true
 sqlx.workspace = true
+sea-query.workspace = true
 redis.workspace = true
 ulid.workspace = true
 argon2.workspace = true

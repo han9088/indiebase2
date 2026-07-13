@@ -173,6 +173,8 @@ pub async fn list_projects_for_user(
         FROM projects p
         INNER JOIN project_members pm ON pm.project_id = p.id
         WHERE pm.user_id = $1
+          AND p.deleted_at IS NULL
+          AND pm.deleted_at IS NULL
         ORDER BY p.created_at DESC
         "#,
     )
@@ -196,7 +198,15 @@ pub async fn membership_role(
     project_id: &str,
 ) -> Result<Option<String>, ApiError> {
     let role: Option<String> = sqlx::query_scalar(
-        "SELECT role FROM project_members WHERE user_id = $1 AND project_id = $2",
+        r#"
+        SELECT pm.role
+        FROM project_members pm
+        INNER JOIN projects p ON p.id = pm.project_id
+        WHERE pm.user_id = $1
+          AND pm.project_id = $2
+          AND pm.deleted_at IS NULL
+          AND p.deleted_at IS NULL
+        "#,
     )
     .bind(user_id)
     .bind(project_id)

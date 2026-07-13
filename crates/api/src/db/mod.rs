@@ -6,6 +6,9 @@ use sqlx::PgPool;
 use crate::config::Config;
 use crate::constants::auth::{DEV_SEED_EMAIL, DEV_SEED_PASSWORD};
 
+pub mod schema;
+pub mod sync;
+
 /// Connect to Postgres and fail fast if unreachable.
 pub async fn connect_pool(config: &Config) -> Result<PgPool, String> {
     let url = config.database_url();
@@ -25,12 +28,24 @@ pub async fn connect_redis(config: &Config) -> Result<ConnectionManager, String>
         .map_err(|err| format!("failed to connect to Redis: {err}"))
 }
 
-/// Apply embedded sqlx migrations.
+/// Apply embedded sqlx migrations (production / non-development).
 pub async fn run_migrations(pool: &PgPool) -> Result<(), String> {
     sqlx::migrate!("./migrations")
         .run(pool)
         .await
         .map_err(|err| format!("migration failed: {err}"))
+}
+
+/// Prepare platform schema: SeaQuery synchronize in development, sqlx migrations otherwise.
+///
+/// Development mirrors TypeORM `synchronize: true` — DDL hash changes recreate platform tables
+/// (no backward-compat). Production uses versioned sqlx migrations only.
+pub async fn prepare_schema(pool: &PgPool, config: &Config) -> Result<(), String> {
+    if config.env == "development" {
+        sync::synchronize_platform_schema(pool).await
+    } else {
+        run_migrations(pool).await
+    }
 }
 
 /// Seed a local platform user in development when none exists for the seed email.
@@ -39,11 +54,13 @@ pub async fn ensure_dev_seed_user(pool: &PgPool, config: &Config) -> Result<(), 
         return Ok(());
     }
 
-    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)")
-        .bind(DEV_SEED_EMAIL)
-        .fetch_one(pool)
-        .await
-        .map_err(|err| format!("seed user lookup failed: {err}"))?;
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND deleted_at IS NULL)",
+    )
+    .bind(DEV_SEED_EMAIL)
+    .fetch_one(pool)
+    .await
+    .map_err(|err| format!("seed user lookup failed: {err}"))?;
 
     if exists {
         return Ok(());

@@ -4,7 +4,7 @@ use utoipa::openapi::extensions::Extensions;
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa::{Modify, OpenApi};
 
-use crate::routes::auth::{LoginRequest, ProjectLoginRequest, TokenResponse};
+use crate::routes::auth::{LoginRequest, OkResponse, ProjectContextResponse, TokenResponse};
 use crate::routes::health::HealthResponse;
 use crate::routes::projects::{
     CreateProjectRequest, CreateProjectResponse, ListProjectsResponse, ProjectKeys, ProjectSummary,
@@ -35,7 +35,13 @@ impl Modify for BearerSecurity {
                 SecurityScheme::Http(
                     HttpBuilder::new()
                         .scheme(HttpAuthScheme::Bearer)
-                        .bearer_format("opaque")
+                        .bearer_format("Opaque Token")
+                        .description(Some(
+                            "Dashboard Session from `POST /api/auth/login`. \
+                             Send as `Authorization: Bearer <token>`. Not a JWT.\n\n\
+                             Project-scoped routes also require header \
+                             `X-Indiebase-Project-Id: <project_ulid>` (membership checked per request).",
+                        ))
                         .build(),
                 ),
             );
@@ -46,25 +52,33 @@ impl Modify for BearerSecurity {
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "Indiebase API",
+        title = "Indiebase Manager API",
         version = "0.1.0",
-        description = "Self-hosted BaaS — Manager API and Data API (MVP in progress)."
+        description = "Indiebase is a self-hosted BaaS for indie teams.\n\n\
+            **This document covers the Manager API** (Dashboard auth, projects, and platform \
+            governance). Tenant CRUD goes through the Data API (`/api/data/*`) and is not fully \
+            documented here yet.\n\n\
+            **Auth model:** One **Dashboard Session** (Opaque Token + Redis) — no JWT, no second \
+            Project login. Project context is supplied per request with \
+            `X-Indiebase-Project-Id` (or `project_id` in the URL for nested Manager routes). \
+            Membership is resolved via `project_members` on each request.",
+        contact(name = "Indiebase", url = "https://indiebase.deskbtm.com")
     ),
     modifiers(&IndiebaseLogo, &BearerSecurity),
     paths(
         crate::routes::health::health,
         crate::routes::auth::login,
         crate::routes::auth::logout,
-        crate::routes::auth::project_login,
-        crate::routes::auth::project_logout,
+        crate::routes::auth::project_context,
         crate::routes::projects::create,
         crate::routes::projects::list,
     ),
     components(schemas(
         HealthResponse,
         LoginRequest,
-        ProjectLoginRequest,
         TokenResponse,
+        OkResponse,
+        ProjectContextResponse,
         CreateProjectRequest,
         CreateProjectResponse,
         ProjectKeys,
@@ -72,9 +86,9 @@ impl Modify for BearerSecurity {
         ListProjectsResponse,
     )),
     tags(
-        (name = "system", description = "Liveness and docs"),
-        (name = "auth", description = "Dashboard and Project sessions"),
-        (name = "projects", description = "Project lifecycle (Manager API)")
+        (name = "system", description = "Liveness probes and documentation endpoints"),
+        (name = "auth", description = "Dashboard Session (Opaque Token + Redis); project context via header"),
+        (name = "projects", description = "Project lifecycle on the Manager API (create, list, membership)")
     )
 )]
 pub struct ApiDoc;

@@ -1,12 +1,12 @@
 ## Purpose
 
-Phase 0 Axum server bootstrap: workspace, health, config seams for Manager API and Data API.
+Axum API process bootstrap: Cargo workspace, liveness, env-driven config seams, and Postgres/Redis clients for Manager API routes.
 
 ## Requirements
 
 ### Requirement: Cargo workspace builds and lints cleanly
 
-The repository SHALL provide a root Cargo workspace that includes at least one binary server crate. The workspace MUST pass `cargo fmt --check`, `cargo clippy -- -D warnings` (workspace-default), and `cargo test` without manual patches.
+The repository SHALL provide a root Cargo workspace that includes at least one binary server crate (`crates/api`). The workspace MUST pass `cargo fmt --check`, `cargo clippy -- -D warnings` (workspace-default), and `cargo test` without manual patches.
 
 #### Scenario: Developer runs quality checks
 
@@ -25,7 +25,7 @@ The server SHALL expose `GET /health` on the configured listen address. A succes
 #### Scenario: Health check without dependencies
 
 - **WHEN** Postgres, Redis, or PostgREST are unreachable or not running
-- **THEN** `GET /health` still returns 200 (liveness only; dependency checks are out of scope for Phase 0)
+- **THEN** `GET /health` still returns 200 (liveness only; dependency probes are out of scope)
 
 ### Requirement: Configuration loads from environment
 
@@ -44,6 +44,20 @@ The server SHALL read configuration from process environment variables and Vite-
 - **WHEN** a required environment variable is missing or empty
 - **THEN** the server exits during startup with a clear error message (non-zero exit code)
 
+### Requirement: Server establishes Postgres and Redis clients at startup
+
+The server SHALL create a Postgres pool (sqlx) and a Redis client from `Config` during startup. Failure to connect MUST fail startup with a clear error (non-zero exit). `GET /health` MAY remain liveness-only without probing dependencies.
+
+#### Scenario: Startup with reachable infra
+
+- **WHEN** Postgres and Redis are reachable with configured credentials
+- **THEN** the server starts and holds usable pool/client handles for Manager routes
+
+#### Scenario: Startup fails when Postgres unreachable
+
+- **WHEN** Postgres cannot be connected at startup
+- **THEN** the process exits with a non-zero status and an error mentioning the database
+
 ### Requirement: Server runs alongside local Docker stack
 
 The server SHALL be runnable on the host while Docker Compose provides Postgres, Redis, and PostgREST. Documentation MUST use `docker compose --env-file .env.development up -d` as the sole local compose convention.
@@ -53,11 +67,11 @@ The server SHALL be runnable on the host while Docker Compose provides Postgres,
 - **WHEN** Docker compose services are up and the developer starts the Axum server with repo-standard env
 - **THEN** `GET /health` responds successfully on the configured port
 
-### Requirement: Module layout reserves Manager and Data API seams
+### Requirement: Module layout separates Manager API and Data API seams
 
-The server crate SHALL organize code so Phase 1+ can add routers without restructuring: e.g. `main.rs` (or `lib.rs` + bin) wires Axum; placeholder modules or router merge points for **Manager API** and **Data API gateway** are documented in design or code comments.
+The server crate SHALL organize routers so Manager API (`/api/*` platform routes) and Data API gateway (`/api/data/*`) can nest independently without renaming the crate or moving the workspace root.
 
-#### Scenario: Future router extension
+#### Scenario: Router extension
 
-- **WHEN** a follow-up change adds `/api/auth/*` or `/api/data/*` routes
-- **THEN** new routers can nest into the existing Axum app without renaming the crate or moving the workspace root
+- **WHEN** a change adds Manager routes under `/api` or a Data API gateway under `/api/data`
+- **THEN** new routers can merge into the existing Axum app without restructuring the workspace

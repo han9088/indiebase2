@@ -4,27 +4,31 @@ context: |
   Project: Indiebase — self-hosted BaaS for indie developers and small teams.
   Stack: Rust (Cargo workspace) — Axum, sqlx, SeaQuery, OpenDAL, ulid; Postgres 17, Redis, PostgREST.
   Manager API: Dashboard platform/admin routes (/api/projects, /api/tables, /api/auth/*, …); NOT /api/data/*.
-  Data API: CRUD gateway (/api/data/*), PostgREST proxy, separate from Manager API; Dashboard Session or SDK API Key.
-  MVP TS SDK: see docs/prd/mvp-sdk.md — @supabase/postgrest-js thin wrapper; /api/data/{projectId} + API Key.
-  Project API Key: SDK authentication/authorization only — does NOT resolve project context.
-  Isolation: schema-per-project as proj_{ulid}; platform tables in public schema.
-  Auth: no JWT. Dashboard + Project login: Opaque Token + Redis.
-  Optional object storage: SeaweedFS S3 under docker/seaweedfs/ (separate compose, not in root stack).
+  Data API: CRUD gateway (/api/data/*), PostgREST proxy; Dashboard Session or SDK API Key (not implemented in main specs yet).
+  Auth: no JWT. Dashboard Session = Opaque Token + Redis (`dashboard_session:`). Project context = `X-Indiebase-Project-Id` + `project_members` (no Project Session). App User Session is for SDK end-users later.
+  Project API Key: SDK authentication only — does NOT resolve project context; project comes from URL on SDK Data API path.
+  Isolation: schema-per-project `proj_{ulid}`; platform tables in `public`.
+  MVP TS SDK: docs/prd/mvp-sdk.md — @supabase/postgrest-js thin wrapper; base `/api/data/{projectId}` + Publishable Key.
+  Architecture source of truth: docs/prd/baas-platform-architecture.md. Delivery checklist: docs/prd/mvp-phases.md (product tracking only — do NOT name OpenSpec changes after Phase N).
+  Capability vocabulary (main specs today): server-bootstrap, env-config, api-docs, platform-auth, project-lifecycle.
+  Planned capability names for future changes (not main specs until shipped): data-api-gateway, metadata-table-designer, storage-opendal-fs, app-user-session, ts-sdk.
   Local infra: `docker compose --env-file .env.development up -d`; Vite-style env via INDIEBASE_ENV (development|production).
-  Lint/format: `cargo fmt`, `cargo clippy`; tests via `cargo test`.
-  Tests: optional — not required before every edit (see `.cursor/rules/backend-tdd-prd.mdc`).
-  PRD sync: when routes, env, auth, phase scope, or SDK contract change, update `docs/prd/` in the same change.
+  Lint/format: `cargo fmt`, `cargo clippy`; tests via `cargo test` (optional before edits).
+  PRD sync: when routes, env, auth, acceptance, or SDK contract change, update docs/prd/ in the same change.
   Docs language: reply to users in Simplified Chinese; source code, comments, and commit messages in English.
-  OpenSpec: optional — only when the user asks for OPSX; then explore → propose → apply → sync → archive.
-  Brownfield: delta specs only; do not back-fill specs for untouched code.
+  OpenSpec: optional — only when the user asks (/opsx:*, "用 openspec"); explore → propose → apply → sync → archive.
+  Changes: name by capability/intent (e.g. data-api-gateway), never phase-N-*.
+  Brownfield: delta specs only for the change; do not invent main specs for untouched code.
 
 rules:
   proposal:
     - Keep proposals under 800 words; include Non-goals
     - One logical change per proposal; split large scope into follow-up changes
+    - Name changes by capability (kebab-case); never use phase-N-* prefixes
   design:
     - Match existing Rust module boundaries and Docker layout
     - Call out Postgres schema / PostgREST / RLS impacts when touching data
+    - Prefer architecture.md conventions over outdated change drafts
   tasks:
     - Break into chunks that can be verified independently
     - Include PRD sync task when product behavior or acceptance criteria change
@@ -32,3 +36,4 @@ rules:
   specs:
     - Use Given/When/Then scenarios
     - Reference existing patterns in repo before inventing new abstractions
+    - Align with architecture.md (Dashboard Session + project header; no Project Session)

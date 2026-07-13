@@ -31,6 +31,8 @@ Tests are welcome for regressable backend behavior (`crates/<crate>/tests/*.rs` 
 
 ## API docs convention
 
+See `.cursor/rules/openapi-utoipa.mdc` (titles, summaries, field descriptions/examples).
+
 - OpenAPI: code-first via `utoipa`; spec at `GET /openapi.json`
 - Interactive docs: Scalar at `GET /docs`
-- New routes: `#[utoipa::path]`; add a covering test when useful
+- New routes: full `#[utoipa::path]` + schema rustdocs/`#[schema(...)]`; covering test when useful

@@ -2,16 +2,24 @@ use axum::Json;
 use serde::Serialize;
 use utoipa::ToSchema;
 
+/// Process liveness payload.
 #[derive(Serialize, ToSchema)]
+#[schema(example = json!({"status":"ok"}))]
 pub struct HealthResponse {
+    /// Always `ok` when the process is accepting HTTP.
+    #[schema(example = "ok")]
     pub status: &'static str,
 }
 
 #[utoipa::path(
     get,
     path = "/health",
+    operation_id = "system_health",
+    summary = "Liveness check",
+    description = "Returns `{ \"status\": \"ok\" }` when the API process is up. Does not verify \
+        Postgres, Redis, or PostgREST connectivity.",
     responses(
-        (status = 200, description = "Liveness check", body = HealthResponse)
+        (status = 200, description = "Process is accepting requests", body = HealthResponse)
     ),
     tag = "system"
 )]

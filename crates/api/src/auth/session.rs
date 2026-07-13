@@ -1,21 +1,13 @@
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
-use crate::constants::session::{DASHBOARD_SESSION_PREFIX, PROJECT_SESSION_PREFIX};
+use crate::constants::session::DASHBOARD_SESSION_PREFIX;
 use crate::error::ApiError;
 use crate::state::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DashboardSessionData {
     pub user_id: String,
-    pub exp: u64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProjectSessionData {
-    pub user_id: String,
-    pub project_id: String,
-    pub project_role: String,
     pub exp: u64,
 }
 
@@ -36,10 +28,6 @@ fn now_epoch_secs() -> u64 {
 
 pub fn dashboard_session_key(token: &str) -> String {
     format!("{DASHBOARD_SESSION_PREFIX}{token}")
-}
-
-pub fn project_session_key(token: &str) -> String {
-    format!("{PROJECT_SESSION_PREFIX}{token}")
 }
 
 pub async fn store_dashboard_session(
@@ -79,55 +67,13 @@ pub async fn delete_dashboard_session(state: &AppState, token: &str) -> Result<(
     Ok(())
 }
 
-pub async fn store_project_session(
-    state: &AppState,
-    token: &str,
-    user_id: &str,
-    project_id: &str,
-    project_role: &str,
-) -> Result<ProjectSessionData, ApiError> {
-    let ttl = state.config.session_ttl_secs;
-    let data = ProjectSessionData {
-        user_id: user_id.to_string(),
-        project_id: project_id.to_string(),
-        project_role: project_role.to_string(),
-        exp: now_epoch_secs().saturating_add(ttl),
-    };
-    let payload = serde_json::to_string(&data)?;
-    let key = project_session_key(token);
-    let mut redis = state.redis.clone();
-    redis.set_ex::<_, _, ()>(key, payload, ttl).await?;
-    Ok(data)
-}
-
-pub async fn load_project_session(
-    state: &AppState,
-    token: &str,
-) -> Result<Option<ProjectSessionData>, ApiError> {
-    let key = project_session_key(token);
-    let mut redis = state.redis.clone();
-    let value: Option<String> = redis.get(key).await?;
-    match value {
-        Some(raw) => Ok(Some(serde_json::from_str(&raw)?)),
-        None => Ok(None),
-    }
-}
-
-pub async fn delete_project_session(state: &AppState, token: &str) -> Result<(), ApiError> {
-    let key = project_session_key(token);
-    let mut redis = state.redis.clone();
-    let _: () = redis.del(key).await?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn session_key_prefixes() {
+    fn session_key_prefix() {
         assert_eq!(dashboard_session_key("abc"), "dashboard_session:abc");
-        assert_eq!(project_session_key("xyz"), "project_session:xyz");
     }
 
     #[test]

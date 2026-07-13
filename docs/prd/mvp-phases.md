@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Status | Draft |
-| Last updated | 2026-07-04 |
+| Last updated | 2026-07-13 |
 | Parent | [baas-platform-architecture.md](./baas-platform-architecture.md) |
 | Client SDK | [mvp-sdk.md](./mvp-sdk.md) |
 | 后续能力 | [todo.md](./todo.md)（**不在** MVP） |
@@ -22,7 +22,7 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | Phase | 名称 | 交付物（摘要） | 验收一句话 |
 |-------|------|----------------|------------|
 | **0** | 工程壳 + 本地栈 | Cargo workspace、Axum `/health`、OpenAPI + Scalar 文档、compose 联调 | `cargo test` + `curl /health` + `/docs` + compose up |
-| **1** | Platform + 登录 + Project | 平台表、Dashboard/Project Session、创建 `proj_{ulid}` | 登录 → 建 Project → schema + Key 对已生成 |
+| **1** | Platform + 登录 + Project | 平台表、Dashboard Session、`X-Indiebase-Project-Id`、创建 `proj_{ulid}` | 登录 → 建 Project → schema + Key 对已生成 |
 | **2** | Data API 网关 | PostgREST 代理、`SET ROLE`、双路径 §6.2.3、Key 校验 | SDK URL CRUD 通；非法凭证组合 403 |
 | **3** | Metadata / 表设计器 | 建表 API、bootstrap RLS、`allow_anon_read` | Manager 建表 → Data API 可 CRUD |
 | **4** | Storage | Manager API + OpenDAL fs | Dashboard 上传/下载/列表 |
@@ -47,11 +47,11 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 **验收：**
 
-- [ ] `cargo fmt`、`cargo clippy`、`cargo test` 通过
-- [ ] `docker compose up -d` 后 Axum 能连 Postgres / Redis
-- [ ] `curl localhost:{port}/health` 返回 OK
-- [ ] `curl localhost:{port}/openapi.json` 返回含 `/health` 的 OpenAPI JSON
-- [ ] 浏览器打开 `localhost:{port}/docs` 可见 Scalar API 文档
+- [x] `cargo fmt`、`cargo clippy`、`cargo test` 通过
+- [x] `docker compose up -d` 后 Axum 能连 Postgres / Redis
+- [x] `curl localhost:{port}/health` 返回 OK
+- [x] `curl localhost:{port}/openapi.json` 返回含 `/health` 的 OpenAPI JSON
+- [x] 浏览器打开 `localhost:{port}/docs` 可见 Scalar API 文档
 
 **依赖：** 无。
 
@@ -59,21 +59,21 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 
 ## Phase 1 — Platform + 登录 + Project 生命周期
 
-**目标：** 平台成员能登录、创建 Project、进入 Project 上下文。
+**目标：** 平台成员能登录、创建 Project，并用同一 token + project 头访问项目资源。
 
 | 任务 | 说明 |
 |------|------|
-| Migrations | `public.users`、`projects`、`project_members`、`api_keys`（Publishable + Secret hash） |
+| Migrations | 开发：`db/schema.rs` SeaQuery synchronize；生产：sqlx `migrations/`；表均含 `deleted_at` |
 | Dashboard Session | `POST /api/auth/login`、`logout`；Redis `dashboard_session:` |
 | Project CRUD | `POST /api/projects` 等（Manager API） |
 | 创建 Project | ULID → `CREATE SCHEMA proj_{ulid}` → 租户 DB roles → 默认 Key 对 → PostgREST schema 注册 + reload |
-| Project Session | `POST /api/auth/project/login`；Redis `project_session:` 含 `project_id`、`project_role` |
+| Project 上下文 | `X-Indiebase-Project-Id` + `project_members`；`GET /api/auth/project-context` |
 
 **验收：**
 
 - [x] Dashboard 登录后调 Manager API 列出 projects
 - [x] 创建 Project 后 DB 存在 `proj_{ulid}` + `api_keys` 两行
-- [x] Project 登录后 Redis 有 `project_session:{token}` 且含正确 `project_id`
+- [x] Dashboard token + `X-Indiebase-Project-Id` → `GET /api/auth/project-context` 返回正确 `role`
 - [x] PostgREST reload 后新 schema 可达（内网 smoke）— 见 `docs/notes/postgrest-schema-reload.md`（`pg_notify` + schemas 文件）
 
 **依赖：** Phase 0。
@@ -93,14 +93,14 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | Key 校验 | Publishable / Secret 与 URL `project_id` 绑定 |
 | 代理 | strip 前缀、`Accept-Profile: proj_{ulid}`、转发 Prefer/Range |
 | PostgREST 身份 | authenticator + Internal-Context + `db-pre-request` + **SET ROLE** |
-| Dashboard 路径 | Project Session → `project_operator*` |
+| Dashboard 路径 | Dashboard Session + `X-Indiebase-Project-Id` → `project_operator*` |
 
 **验收：**
 
 - [ ] Secret Key：`GET /api/data/{id}/users` 代理成功（service role）
 - [ ] Publishable Key：同路径可用；Key 与 URL project 不一致 → 403
-- [ ] Project Session：`GET /api/data/users` 可用；带 `X-Indiebase-Api-Key` → 403
-- [ ] SDK URL + Project Session Bearer → 403
+- [ ] Dashboard + project 头：`GET /api/data/users` 可用；带 `X-Indiebase-Api-Key` → 403
+- [ ] SDK URL + Dashboard Session Bearer → 403
 - [ ] 内网 PostgREST 不对公网（生产不 publish 端口）
 
 **依赖：** Phase 1（schema、Key、Session 存在）。
@@ -118,14 +118,14 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | Metadata 表 | `public.table_metadata`、`column_metadata`（含 `allow_anon_read`） |
 | Manager API | 创建/修改/删除表、列（DDL 在 `proj_{ulid}`） |
 | bootstrap RLS | 建表时写入默认 policies（§11.3） |
-| Row Viewer | Dashboard `/api/data/*` + Project Session 可浏览新表 |
+| Row Viewer | Dashboard `/api/data/*` + Dashboard Session + `X-Indiebase-Project-Id` 可浏览新表 |
 
 **验收：**
 
 - [ ] Manager API 创建 `users` 表后，Metadata 与 `proj_{ulid}.users` 一致
 - [ ] Publishable Key + 无 Session：默认不可读写；`allow_anon_read=true` 后仅 SELECT
 - [ ] Publishable Key + App User Session（Phase 5 前可用手工 token smoke）：authenticated CRUD
-- [ ] Project Session owner：全表 CRUD；member：只读
+- [ ] Dashboard Data API owner：全表 CRUD；member：只读
 
 **依赖：** Phase 2。
 
@@ -181,25 +181,30 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 同时满足：
 
 1. **平台：** 登录 → 建 Project → Project 登录 → 表设计器建表  
-2. **Dashboard 数据：** Row Viewer CRUD（Project Session）  
+2. **Dashboard 数据：** Row Viewer CRUD（Dashboard Session + project 头）  
 3. **SDK：** TS 客户端 Publishable Key ± App User Session CRUD  
 4. **Storage：** Dashboard 文件管理（Phase 4）  
 5. **质量：** `cargo test`、关键路径集成测试、无已知 P0 安全洞（双路径互斥、Key 不转发 PostgREST）
 
 ---
 
-## 与 OpenSpec 建议
+## 与 OpenSpec
 
-| Phase | 建议 change 名（示例） |
-|-------|------------------------|
-| 0 | `bootstrap-api` |
-| 1 | `platform-auth-project-lifecycle` |
-| 2 | `data-api-gateway` |
-| 3 | `metadata-table-designer` |
-| 4 | `storage-opendal-fs` |
-| 5 | `app-user-session-ts-sdk` |
+OpenSpec **按能力（capability）** 组织，**不**按 Phase 编号命名 change。
 
-每 Phase 一个 OpenSpec change；Phase 2 可拆 spike（PostgREST reload、db-pre-request）若过大。
+主规格见 `openspec/specs/`（已落地）：`server-bootstrap`、`env-config`、`api-docs`、`platform-auth`、`project-lifecycle`。
+
+后续工作建议的 change / capability 名（与本文件交付切分对应，但命名不带 Phase）：
+
+| 能力 | 建议 change 名 |
+|------|----------------|
+| Data API 网关 | `data-api-gateway` |
+| Metadata / 表设计器 | `metadata-table-designer` |
+| Storage (OpenDAL fs) | `storage-opendal-fs` |
+| App User Session | `app-user-session` |
+| TS SDK | `ts-sdk` |
+
+大范围可拆多个 change（例如 PostgREST `db-pre-request` spike 与网关主路径分开）。PRD 仍用本文件跟踪验收勾选。
 
 ## References
 

@@ -13,7 +13,7 @@ Instructions for AI coding agents working in this repository.
 | Manager API | Dashboard routes (`/api/projects`, `/api/tables`, `/api/auth/*`, …) — **not** `/api/data/*` |
 | Data API | CRUD gateway `/api/data/*`, PostgREST proxy; Dashboard Session or SDK API Key |
 | Isolation | Schema-per-project `proj_{ulid}`; platform tables in `public` |
-| Auth | No JWT; Opaque Token + Redis (Dashboard / Project / App User sessions) |
+| Auth | No JWT; Opaque Token + Redis (Dashboard / App User); project via `X-Indiebase-Project-Id` |
 | Local infra | `docker compose --env-file .env.development up -d`; Vite-style env via `INDIEBASE_ENV` |
 
 ## Language
@@ -46,13 +46,18 @@ Details: `.cursor/rules/backend-tdd-prd.mdc`.
 
 ### OpenSpec
 
-Use OpenSpec when the user asks (`/opsx:*`, "用 openspec", etc.) — see `.cursor/rules/openspec-workflow.mdc` if present, and `openspec/`.
+Use OpenSpec when the user asks (`/opsx:*`, "用 openspec", etc.) — see `openspec/` and `openspec/config.yaml`.
+
+- Main specs are **capability-based** (`server-bootstrap`, `platform-auth`, …), not Phase-numbered.
+- Name changes by capability/intent (e.g. `data-api-gateway`); never `phase-N-*`.
+- Product delivery checklist stays in `docs/prd/mvp-phases.md`; architecture in `docs/prd/baas-platform-architecture.md`.
 
 ## API documentation
 
 - **OpenAPI:** code-first via `utoipa`; served at `GET /openapi.json`
 - **Interactive docs:** [Scalar](https://scalar.com/) at `GET /docs`
-- New routes: prefer `#[utoipa::path]` + a covering test when useful
+- **Conventions:** `.cursor/rules/openapi-utoipa.mdc` — `summary` / `description` / `operation_id`, schema field docs + examples
+- New routes: follow that rule; add a covering test when useful
 
 ## Code organization
 
@@ -98,15 +103,15 @@ Compose: `docker compose --env-file .env.development up -d` (sole convention).
 
 | Doc | Purpose |
 |-----|---------|
-| `docs/prd/mvp-phases.md` | MVP Phase 0–5 breakdown |
+| `docs/prd/mvp-phases.md` | MVP delivery checklist + OpenSpec capability naming |
 | `docs/prd/baas-platform-architecture.md` | Full platform architecture |
 | `docs/prd/mvp-sdk.md` | MVP TypeScript SDK |
-| `openspec/config.yaml` | OpenSpec project context (when using OpenSpec) |
+| `openspec/config.yaml` | OpenSpec context; main specs under `openspec/specs/` |
 | `.cursor/rules/` | Persistent Cursor rules |
 
 ## Guardrails
 
 - Change only what the task requires.
 - Do not commit unless the user asks.
-- No JWT; respect session / credential mutual-exclusion rules in architecture §6.2.3.
+- No JWT; Dashboard Session + `X-Indiebase-Project-Id` for project scope; respect §6.2.3 mutual-exclusion.
 - Project API Key is SDK auth only — it does **not** resolve project context.

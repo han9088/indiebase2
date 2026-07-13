@@ -4,7 +4,6 @@
 use axum::body::Body;
 use http::{Request, StatusCode};
 use http_body_util::BodyExt;
-use redis::AsyncCommands;
 use serde_json::json;
 use tower::ServiceExt;
 
@@ -16,7 +15,7 @@ async fn try_state() -> Option<api::state::AppState> {
     let config = api::config::Config::from_env().ok()?;
     let pool = api::db::connect_pool(&config).await.ok()?;
     let redis = api::db::connect_redis(&config).await.ok()?;
-    api::db::run_migrations(&pool).await.ok()?;
+    api::db::prepare_schema(&pool, &config).await.ok()?;
     api::db::ensure_dev_seed_user(&pool, &config).await.ok()?;
     Some(api::state::AppState::new(pool, redis, config))
 }
@@ -30,6 +29,30 @@ async fn json_body(response: axum::response::Response) -> serde_json::Value {
         .to_bytes();
     serde_json::from_slice(&body)
         .unwrap_or_else(|_| json!({ "raw": String::from_utf8_lossy(&body) }))
+}
+
+async fn login_token(app: &axum::Router) -> String {
+    let login = app
+        .clone()
+        .oneshot(
+            Request::post("/api/auth/login")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    json!({
+                        "email": "dev@indiebase.com",
+                        "password": "dev@indiebase.com"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .expect("login");
+    assert_eq!(login.status(), StatusCode::OK);
+    json_body(login).await["token"]
+        .as_str()
+        .expect("token")
+        .to_string()
 }
 
 #[tokio::test]
@@ -47,7 +70,7 @@ async fn login_success_and_invalid_credentials() {
                 .header("content-type", "application/json")
                 .body(Body::from(
                     json!({
-                        "email": "admin@indiebase.local",
+                        "email": "dev@indiebase.com",
                         "password": "wrong-password"
                     })
                     .to_string(),
@@ -64,7 +87,7 @@ async fn login_success_and_invalid_credentials() {
                 .header("content-type", "application/json")
                 .body(Body::from(
                     json!({
-                        "email": "admin@indiebase.local",
+                        "email": "dev@indiebase.com",
                         "password": "dev@indiebase.com"
                     })
                     .to_string(),
@@ -80,84 +103,38 @@ async fn login_success_and_invalid_credentials() {
 }
 
 #[tokio::test]
-async fn project_login_forbidden_for_non_member() {
+async fn project_context_forbidden_for_non_member() {
     let Some(state) = try_state().await else {
-        eprintln!("skipping project_login_forbidden_for_non_member: Postgres/Redis unavailable");
+        eprintln!("skipping project_context_forbidden_for_non_member: Postgres/Redis unavailable");
         return;
     };
     let app = api::app::router(state);
+    let token = login_token(&app).await;
 
-    let login = app
-        .clone()
-        .oneshot(
-            Request::post("/api/auth/login")
-                .header("content-type", "application/json")
-                .body(Body::from(
-                    json!({
-                        "email": "admin@indiebase.local",
-                        "password": "dev@indiebase.com"
-                    })
-                    .to_string(),
-                ))
-                .unwrap(),
-        )
-        .await
-        .expect("login");
-    assert_eq!(login.status(), StatusCode::OK);
-    let token = json_body(login).await["token"]
-        .as_str()
-        .expect("token")
-        .to_string();
-
-    // ULID-shaped id the seed user is not a member of → 403
     let forbidden = app
         .oneshot(
-            Request::post("/api/auth/project/login")
-                .header("content-type", "application/json")
+            Request::get("/api/auth/project-context")
                 .header("authorization", format!("Bearer {token}"))
-                .body(Body::from(
-                    json!({ "project_id": "01AAAAAAAAAAAAAAAAAAAAAAAA" }).to_string(),
-                ))
+                .header("x-indiebase-project-id", "01AAAAAAAAAAAAAAAAAAAAAAAA")
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
-        .expect("project login");
+        .expect("project context");
     assert_eq!(forbidden.status(), StatusCode::FORBIDDEN);
 }
 
 #[tokio::test]
-async fn create_project_provisions_schema_keys_and_project_session() {
+async fn create_project_provisions_schema_keys_and_project_context() {
     let Some(state) = try_state().await else {
         eprintln!(
-            "skipping create_project_provisions_schema_keys_and_project_session: infra unavailable"
+            "skipping create_project_provisions_schema_keys_and_project_context: infra unavailable"
         );
         return;
     };
     let pool = state.pool.clone();
-    let mut redis = state.redis.clone();
     let app = api::app::router(state);
-
-    let login = app
-        .clone()
-        .oneshot(
-            Request::post("/api/auth/login")
-                .header("content-type", "application/json")
-                .body(Body::from(
-                    json!({
-                        "email": "admin@indiebase.local",
-                        "password": "dev@indiebase.com"
-                    })
-                    .to_string(),
-                ))
-                .unwrap(),
-        )
-        .await
-        .expect("login");
-    assert_eq!(login.status(), StatusCode::OK);
-    let dash_token = json_body(login).await["token"]
-        .as_str()
-        .expect("token")
-        .to_string();
+    let dash_token = login_token(&app).await;
 
     let create = app
         .clone()
@@ -225,26 +202,18 @@ async fn create_project_provisions_schema_keys_and_project_session() {
     let projects = listed["projects"].as_array().expect("projects array");
     assert!(projects.iter().any(|p| p["id"] == project_id));
 
-    let proj_login = app
+    let ctx = app
         .oneshot(
-            Request::post("/api/auth/project/login")
-                .header("content-type", "application/json")
+            Request::get("/api/auth/project-context")
                 .header("authorization", format!("Bearer {dash_token}"))
-                .body(Body::from(json!({ "project_id": project_id }).to_string()))
+                .header("x-indiebase-project-id", &project_id)
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
-        .expect("project login");
-    assert_eq!(proj_login.status(), StatusCode::OK);
-    let proj_token = json_body(proj_login).await["token"]
-        .as_str()
-        .expect("project token")
-        .to_string();
-
-    let redis_key = format!("project_session:{proj_token}");
-    let raw: Option<String> = redis.get(&redis_key).await.expect("redis get");
-    let payload: serde_json::Value =
-        serde_json::from_str(&raw.expect("project session missing in redis")).unwrap();
-    assert_eq!(payload["project_id"].as_str(), Some(project_id.as_str()));
-    assert_eq!(payload["project_role"].as_str(), Some("owner"));
+        .expect("project context");
+    assert_eq!(ctx.status(), StatusCode::OK);
+    let body = json_body(ctx).await;
+    assert_eq!(body["project_id"].as_str(), Some(project_id.as_str()));
+    assert_eq!(body["role"].as_str(), Some("owner"));
 }

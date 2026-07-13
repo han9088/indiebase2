@@ -33,7 +33,10 @@ Indiebase is a self-hosted BaaS platform for indie developers and small teams.
    just migrate
    ```
 
-   Dev seed user: `admin@indiebase.local` / `dev@indiebase.com`.
+   Development: SeaQuery **synchronize** (TypeORM-like) — editing `crates/api/src/db/schema.rs` recreates platform tables when DDL hash changes.  
+   Production: sqlx migrations under `crates/api/migrations/`.
+
+   Dev seed user: `dev@indiebase.com` / `dev@indiebase.com`.
 
 4. Run the API server:
 
@@ -65,7 +68,7 @@ Indiebase is a self-hosted BaaS platform for indie developers and small teams.
    # or manually:
    curl -s -X POST http://localhost:8080/api/auth/login \
      -H 'content-type: application/json' \
-     -d '{"email":"admin@indiebase.local","password":"dev@indiebase.com"}'
+     -d '{"email":"dev@indiebase.com","password":"dev@indiebase.com"}'
    ```
 
 PostgREST schema reload after project create: [docs/notes/postgrest-schema-reload.md](./docs/notes/postgrest-schema-reload.md).

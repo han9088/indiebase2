@@ -20,6 +20,7 @@ http = "1"
 utoipa = { version = "5", features = ["axum_extras"] }
 utoipa-scalar = { version = "0.3", features = ["axum"] }
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls-ring", "postgres", "migrate"] }
+sea-query = { version = "1", features = ["backend-postgres", "derive"] }
 redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
 ulid = "1"
 argon2 = "0.5"

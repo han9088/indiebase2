@@ -14,7 +14,7 @@
 | In scope | Out of scope |
 |----------|--------------|
 | `/api/data/{project_id}/*` + **Publishable Key** + 可选 **App User Session** | **Manager API**（暂不提供官方 SDK；S2S 自建） |
-| table CRUD + PostgREST filters | Dashboard Project Session 客户端 |
+| table CRUD + PostgREST filters | Dashboard 客户端（Session + X-Indiebase-Project-Id） |
 | `@supabase/postgrest-js` 薄封装（Web / Browser MVP） | **Secret Key** / 服务端管理员 SDK |
 | | 其他平台 SDK（RN / Android / iOS — 见 [todo.md §5](./todo.md#5-多平台客户端-sdk)） |
 
@@ -137,7 +137,7 @@ For `postgrest-js` to work, the Data API gateway must:
 - Do not mock PostgREST semantics; validate against the real proxy
 - Add cases: Publishable Key only（`auth_mode=anon`）, Publishable Key + App User Session（`auth_mode=authenticated`）
 - Validate **SET ROLE** + bootstrap RLS behavior（anon default deny；`allow_anon_read` opt-in SELECT）
-- Reject cross-path credentials per主 PRD §6.2.3（e.g. Project Session on SDK URL → `403`；Key on Dashboard `/api/data/*` → `403`）
+- Reject cross-path credentials per主 PRD §6.2.3（e.g. Dashboard Session on SDK URL → `403`；Key on Dashboard `/api/data/*` → `403`）
 
 ## 8. 后续实现（out of MVP scope）
 

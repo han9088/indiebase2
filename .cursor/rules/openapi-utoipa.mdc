@@ -1,0 +1,55 @@
+---
+description: OpenAPI / utoipa docs — titles, descriptions, field examples
+globs: crates/api/src/routes/**/*.rs,crates/api/src/openapi.rs
+alwaysApply: false
+---
+
+# OpenAPI (utoipa) conventions
+
+Code-first via `utoipa`. Spec: `GET /openapi.json`. UI: Scalar `GET /docs`.
+
+## Info + tags (`openapi.rs`)
+
+- `info.title` / `version` / `description` must be real product copy (what the API is, auth model in 2–3 sentences).
+- Every tag needs a one-line `description` (audience + scope).
+- Document security schemes with a human description (what token type, where it comes from).
+
+## Every `#[utoipa::path]`
+
+Required:
+
+- `summary` — short verb phrase (e.g. `Create Dashboard Session`)
+- `description` — when to call it, auth, side effects, caveats
+- `operation_id` — stable `snake_case` (`auth_login`, `projects_create`)
+- `tag` — one of the registered tags
+- `responses` — every status the handler returns, with clear `description`
+- `security(...)` when the route needs a session / key
+
+Prefer English in OpenAPI text (matches code / Scalar consumers).
+
+## Schemas (`ToSchema`)
+
+- Struct: rustdoc (`/// ...`) becomes schema description; add `#[schema(example = json!(...))]` when useful.
+- Fields: rustdoc + `#[schema(example = ..., format = "...")]` for emails, passwords, ULIDs, tokens.
+- Enums / role strings: document allowed values in the field description (`owner` \| `admin` \| `member`).
+- One-time secrets (API keys, plaintext passwords in examples): mark clearly in description; use **dev** example values only (`dev@indiebase.com`, `ib_pub_…` shape).
+
+```rust
+/// Credentials for Dashboard Session login.
+#[derive(ToSchema)]
+#[schema(example = json!({"email":"dev@indiebase.com","password":"dev@indiebase.com"}))]
+pub struct LoginRequest {
+    /// Platform user email (normalized to lowercase).
+    #[schema(example = "dev@indiebase.com", format = "email")]
+    pub email: String,
+    /// Account password.
+    #[schema(example = "dev@indiebase.com", format = "password")]
+    pub password: String,
+}
+```
+
+## Do not
+
+- Leave bare `description = "OK"` / empty summaries.
+- Expose internal error strings as the only 500 docs; prefer generic Internal.
+- Skip registering new schemas in `openapi.rs` `components(schemas(...))`.

@@ -1,6 +1,6 @@
 ## Purpose
 
-API documentation surfaces: OpenAPI JSON and Scalar interactive docs.
+API documentation surfaces: OpenAPI JSON and Scalar interactive docs for the Manager API.
 
 ## Requirements
 
@@ -34,3 +34,12 @@ The OpenAPI spec SHALL describe `GET /health` with a JSON response containing a 
 - **WHEN** client fetches `/openapi.json`
 - **THEN** `paths["/health"].get.responses` includes a 200 response
 - **AND** response schema documents a `status` property
+
+### Requirement: Manager auth and project paths in OpenAPI
+
+The OpenAPI document at `GET /openapi.json` SHALL include Manager paths for Dashboard login/logout, project-context, and Project create/list under `/api/auth/*` and `/api/projects`.
+
+#### Scenario: Spec lists auth and project routes
+
+- **WHEN** client fetches `/openapi.json`
+- **THEN** `paths` includes `/api/auth/login`, `/api/auth/logout`, `/api/auth/project-context`, and `/api/projects`

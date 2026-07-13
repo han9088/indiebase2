@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use api::config::Config;
-use api::db::{connect_pool, connect_redis, ensure_dev_seed_user, run_migrations};
+use api::db::{connect_pool, connect_redis, ensure_dev_seed_user, prepare_schema};
 use api::listen_banner::format_listen_banner;
 use api::state::AppState;
 
@@ -22,11 +22,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         err
     })?;
 
-    run_migrations(&pool).await?;
+    prepare_schema(&pool, &config).await?;
     ensure_dev_seed_user(&pool, &config).await?;
 
     if migrate_only {
-        tracing::info!("migrations applied; exiting (--migrate-only)");
+        tracing::info!("schema prepared; exiting (--migrate-only)");
         return Ok(());
     }
 

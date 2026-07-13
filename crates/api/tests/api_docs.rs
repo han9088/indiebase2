@@ -49,11 +49,39 @@ async fn openapi_json_returns_spec_with_health_path() {
         "openapi spec should document /api/projects"
     );
 
+    assert_eq!(
+        spec["info"]["title"].as_str(),
+        Some("Indiebase Manager API"),
+        "OpenAPI info.title should be set"
+    );
+    assert!(
+        spec["paths"]["/api/auth/login"]["post"]["summary"]
+            .as_str()
+            .is_some_and(|s| !s.is_empty()),
+        "login path should have a summary"
+    );
+    assert_eq!(
+        spec["paths"]["/api/auth/login"]["post"]["operationId"].as_str(),
+        Some("auth_login")
+    );
+
     let health_schema = &spec["components"]["schemas"]["HealthResponse"];
     assert_eq!(
         health_schema["properties"]["status"]["type"].as_str(),
         Some("string"),
         "HealthResponse schema should document status string field"
+    );
+    assert!(
+        health_schema["properties"]["status"]
+            .get("description")
+            .and_then(|d| d.as_str())
+            .is_some_and(|d| !d.is_empty()),
+        "schema fields should include descriptions"
+    );
+    let login_schema = &spec["components"]["schemas"]["LoginRequest"];
+    assert_eq!(
+        login_schema["properties"]["email"]["example"].as_str(),
+        Some("dev@indiebase.com")
     );
 }
 

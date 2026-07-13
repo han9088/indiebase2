@@ -27,12 +27,11 @@ pub fn docs_routes() -> Router {
         )
 }
 
-/// Manager API routes under `/api` (Dashboard Session / Project Session).
+/// Manager API routes under `/api` (Dashboard Session; project via header or path).
 pub fn api_routes() -> Router<AppState> {
     Router::new()
         .route("/auth/login", post(auth::login))
         .route("/auth/logout", post(auth::logout))
-        .route("/auth/project/login", post(auth::project_login))
-        .route("/auth/project/logout", post(auth::project_logout))
+        .route("/auth/project-context", get(auth::project_context))
         .route("/projects", get(projects::list).post(projects::create))
 }
